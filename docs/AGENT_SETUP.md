@@ -1,5 +1,9 @@
 # RBForge Agent Setup Brief
 
+The canonical agent setup artifact is
+[AGENT_SETUP.rbmem](AGENT_SETUP.rbmem). This Markdown file is a human-readable
+mirror. Agents that can load Rust-Brain memory should use the `.rbmem` file.
+
 Point an agent at this file when you want it to set up or use RBForge without
 reading the whole repository first.
 

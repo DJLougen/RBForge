@@ -376,7 +376,10 @@ task arguments. Do not forge tools for one-off work, unsafe filesystem writes,
 secret handling, credential access, or arbitrary shell execution.
 ```
 
-For a dedicated agent setup file, see [Agent Setup Brief](AGENT_SETUP.md).
+For a dedicated agent setup file, use the RBMEM-native
+[Agent Setup Memory](AGENT_SETUP.rbmem). The Markdown
+[Agent Setup Brief](AGENT_SETUP.md) is provided for human review, but agents
+that understand Rust-Brain should load the `.rbmem` file.
 
 ## Troubleshooting
 

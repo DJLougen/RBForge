@@ -15,7 +15,9 @@ stable RBMEM paths such as `tools.custom.count_tracebacks`, are indexed in
 ## Start Here
 
 - New to RBForge: read the full [How-To Guide](docs/HOWTO.md).
-- Setting up an autonomous coding agent: point it at
+- Setting up an autonomous coding agent: point it at the RBMEM-native
+  [Agent Setup Memory](docs/AGENT_SETUP.rbmem).
+- Prefer Markdown for human review:
   [Agent Setup Brief](docs/AGENT_SETUP.md).
 - Need RBMEM itself: use [Rust-Brain](https://github.com/DJLougen/Rust-Brain).
 
