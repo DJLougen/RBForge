@@ -2,122 +2,299 @@
 
 ![RBForge runtime tool creation card](assets/RBForge-card.png)
 
-RBForge is a runtime tool creation system for Ornstein/Hermes/SABER
-agents. An agent can notice a missing capability inside `<think>...</think>`,
-call the `forge_tool` meta-tool, validate a proposed implementation, persist it
-to Rust-Brain `.rbmem`, and reuse the new tool in the same session.
+RBForge is a runtime tool creation system for agents. In plain terms: it lets an
+agent write a small tool, validate that tool, save it into durable memory, and
+reuse it later instead of solving the same problem from scratch every time.
 
-The durable memory model is the core difference from ordinary tool-use agents:
-forged tools live at stable dotted RBMEM paths such as
-`tools.custom.rank_lock_hotspots`, are indexed by `tools.registry`, and carry
-explicit graph edges like `depends_on`, `registered_in`, `categorized_as`, and
-`used_in`. RBMEM CLI updates own the temporal fields, so model-generated
-timestamps are never trusted.
+RBForge stores tools in Rust-Brain memory files through the `rbmem` CLI from
+[Rust-Brain](https://github.com/DJLougen/Rust-Brain). The saved tools live in
+stable RBMEM paths such as `tools.custom.count_tracebacks`, are indexed in
+`tools.registry`, and carry graph edges such as `depends_on`, `registered_in`,
+`categorized_as`, and `used_in`.
 
-## Install
+## What It Does
+
+Most tool-use agents can call tools that already exist. RBForge adds a second
+step: the agent can create a new tool when it finds a reusable gap.
+
+RBForge can:
+
+- Accept a proposed tool name, JSON schema, implementation, category, and
+  dependencies.
+- Reject malformed or unsafe implementations before they are saved.
+- Generate and run validation tests in Docker when available, or in a restricted
+  subprocess fallback.
+- Persist validated tools into a `.rbmem` memory file.
+- Register each tool in `tools.registry` so an agent can discover and reuse it.
+- Track usage metrics such as success count, failure count, and success rate.
+- Queue high-impact tools for review instead of activating them automatically.
+
+RBForge is useful for agents that repeatedly need custom analysis, debugging,
+data cleanup, log inspection, report generation, or lightweight workflow tools.
+
+## How It Works
+
+1. An agent notices a reusable missing capability.
+2. It calls `forge_tool` with a complete Python implementation and JSON schema.
+3. RBForge validates the schema and source code.
+4. RBForge runs generated tests against sample inputs.
+5. If validation passes, RBForge saves the tool into RBMEM.
+6. The agent calls `run_forged_tool` with normal arguments.
+7. RBForge updates metrics and keeps the tool available for later sessions.
+
+The important part is persistence: the result is not just a one-off code block.
+It becomes a named tool in durable memory.
+
+## Requirements
+
+- Python 3.10 or newer
+- `jsonschema`
+- `PyYAML`
+- Optional: Docker for stronger sandbox validation
+- Optional but recommended: the `rbmem` CLI from
+  [Rust-Brain](https://github.com/DJLougen/Rust-Brain)
+
+Install Python dependencies from this repo:
 
 ```shell
 cd /path/to/RBForge
 python -m pip install -e .[dev]
 ```
 
-RBForge uses the Rust-Brain `rbmem` CLI. If it is not on PATH, set:
+If `rbmem` is not on `PATH`, set `RBMEM_CLI`:
 
 ```shell
 export RBMEM_CLI=/path/to/rbmem
 ```
 
-If no CLI is found, `RBForge.forge_tool` can clone and build
-`https://github.com/DJLougen/Rust-Brain` with Cargo.
+On PowerShell:
 
-## Run The Demo
+```powershell
+$env:RBMEM_CLI = "C:\path\to\rbmem.exe"
+```
+
+If no CLI is found, RBForge can clone and build
+[Rust-Brain](https://github.com/DJLougen/Rust-Brain) with Cargo.
+
+## Quick Start
+
+Run the included demo:
+
+```shell
+export PYTHONPATH=src
+python scripts/demo_invention_loop.py
+```
+
+On PowerShell:
 
 ```powershell
 $env:PYTHONPATH = "src"
 python scripts/demo_invention_loop.py
 ```
 
-The demo simulates an Ornstein trace:
+The demo simulates an agent that creates a tool, validates it, saves it, and
+then immediately reuses it.
 
-1. `<think>` detects that debugger + ripgrep are not enough.
-2. A Hermes JSON tool call invokes `forge_tool`.
-3. RBForge writes `tools.custom.rank_lock_hotspots` into RBMEM.
-4. The generated tests run in Docker when available, otherwise in a restricted
-   subprocess with timeout and POSIX resource limits where supported.
-5. The tool is registered with graph edges and immediately reused.
-6. The trace is written to `data/traces/demo_invention_loop.jsonl` for DDM.
+## Example: Count Tracebacks
 
-## Autonomous Hermes Connection
-
-RBForge is installed into Hermes in local agent configuration:
-
-- Hermes config: `$HERMES_HOME/config.yaml` or `~/.hermes/config.yaml`
-- Hermes memory: `$HERMES_HOME/MEMORY.rbmem` or `~/.hermes/MEMORY.rbmem`
-- Optional WSL Hermes config, when running from Windows with WSL available:
-  `~/.hermes/config.yaml` inside the selected WSL distribution
-
-The Hermes agent registers two native tools through `tools.registry`:
-
-- `forge_tool`
-- `run_forged_tool`
-
-The active Hermes toolsets include `RBForge`, and the `RBForge` skill tells
-Hermes when to invent a tool autonomously. In normal use, start Hermes with the
-skill/toolset available:
-
-```shell
-hermes -s RBForge
-```
-
-Or use the existing `hermes-cli` toolset; `forge_tool` and `run_forged_tool` are
-now included there too. When Hermes identifies a reusable missing capability, it
-can call `forge_tool`, then immediately call `run_forged_tool` after registration.
-
-Reinstall or repair the bridge with:
-
-```shell
-export PYTHONPATH=src
-python scripts/install_hermes_bridge.py
-```
-
-## Public API
+This creates a small debugging tool that counts Python tracebacks in a log.
 
 ```python
 from RBForge import forge_tool, run_forged_tool
 
 forge_result = forge_tool(
     name="count_tracebacks",
-    description="Count Python tracebacks in a log.",
+    description="Count Python tracebacks in a log string.",
     schema={
         "type": "object",
-        "properties": {"log": {"type": "string", "default": "Traceback"}},
+        "properties": {
+            "log": {
+                "type": "string",
+                "default": "Traceback\nValueError: boom",
+            }
+        },
         "required": ["log"],
     },
-    implementation="def run(log: str) -> dict:\n    return {'count': log.count('Traceback')}\n",
+    implementation=(
+        "def run(log: str) -> dict:\n"
+        "    return {'traceback_count': log.count('Traceback')}\n"
+    ),
     category="debugger",
-    dependencies=["tools.builtin.ripgrep"],
+    expected_output_keys=["traceback_count"],
+    memory_path="memory.rbmem",
 )
+
+print(forge_result["status"])
 
 reuse_result = run_forged_tool(
     name="count_tracebacks",
-    arguments={"log": "Traceback\nboom"},
+    arguments={"log": "ok\nTraceback\nboom\nTraceback\nagain"},
+    memory_path="memory.rbmem",
 )
+
+print(reuse_result["result"])
 ```
 
-Both calls return clean JSON-serializable dictionaries suitable for Hermes tool
-observations and DDM trajectory storage.
+Expected result:
+
+```python
+{"traceback_count": 2}
+```
+
+## Example: Summarize TODOs
+
+This creates a lightweight project-scanning helper that summarizes TODO-style
+lines from text that another tool already collected.
+
+```python
+from RBForge import forge_tool, run_forged_tool
+
+forge_tool(
+    name="summarize_todos",
+    description="Extract TODO and FIXME lines from supplied source text.",
+    schema={
+        "type": "object",
+        "properties": {
+            "text": {
+                "type": "string",
+                "default": "TODO: add tests\nprint('done')",
+            }
+        },
+        "required": ["text"],
+    },
+    implementation=(
+        "def run(text: str) -> dict:\n"
+        "    hits = []\n"
+        "    for index, line in enumerate(text.splitlines(), start=1):\n"
+        "        upper = line.upper()\n"
+        "        if 'TODO' in upper or 'FIXME' in upper:\n"
+        "            hits.append({'line': index, 'text': line.strip()})\n"
+        "    return {'count': len(hits), 'items': hits}\n"
+    ),
+    category="analysis",
+    expected_output_keys=["count", "items"],
+    memory_path="memory.rbmem",
+)
+
+result = run_forged_tool(
+    name="summarize_todos",
+    arguments={"text": "TODO: add CLI\nok\nFIXME: handle empty input"},
+    memory_path="memory.rbmem",
+)
+
+print(result["result"])
+```
+
+Expected result:
+
+```python
+{
+    "count": 2,
+    "items": [
+        {"line": 1, "text": "TODO: add CLI"},
+        {"line": 3, "text": "FIXME: handle empty input"},
+    ],
+}
+```
+
+## Example: High-Impact Tools
+
+Some categories are intentionally treated as high impact:
+
+- `filesystem`
+- `memory`
+- `shell`
+- `web_bubble`
+
+If a tool is in one of these categories, RBForge can validate it but queue it
+for review instead of registering it immediately.
+
+```python
+from RBForge import forge_tool
+
+result = forge_tool(
+    name="echo_command",
+    description="Prepare a constrained shell echo command for review.",
+    schema={"type": "object", "properties": {}, "required": []},
+    implementation=(
+        "import subprocess\n\n"
+        "def run() -> dict:\n"
+        "    return {'module': subprocess.__name__}\n"
+    ),
+    category="shell",
+    memory_path="memory.rbmem",
+)
+
+print(result["status"])
+```
+
+For high-impact categories, expect `review_queued` unless review is disabled by
+your integration policy.
+
+## Hermes Integration
+
+RBForge includes an installer that updates a local Hermes configuration with the
+`RBForge` toolset and durable RBMEM instructions.
+
+By default it uses:
+
+- `$HERMES_HOME/config.yaml`, or `~/.hermes/config.yaml`
+- `$HERMES_RBMEM`, or `~/.hermes/MEMORY.rbmem`
+- `$RBMEM_CLI`, or an `rbmem` executable found on `PATH`
+
+Run:
+
+```shell
+export PYTHONPATH=src
+python scripts/install_hermes_bridge.py
+```
+
+Then start Hermes with the RBForge toolset or skill enabled:
+
+```shell
+hermes -s RBForge
+```
+
+The installer is written to avoid hardcoded personal paths. On Windows, it also
+tries to update the WSL Hermes config when WSL is available.
+
+## What Gets Stored
+
+A registered tool record includes:
+
+- Tool name and description
+- JSON input schema
+- Python implementation
+- Category and dependencies
+- Validation report
+- Graph relations
+- Usage metrics
+
+The registry entry is stored under `tools.registry`, and the full tool record is
+stored under `tools.custom.{name}`.
+
+## Safety Model
+
+RBForge is not a general-purpose arbitrary code execution system. It uses a
+small allowlist for Python imports and rejects dangerous calls such as `eval`,
+`exec`, `compile`, `open`, and direct dynamic imports. Network and shell-related
+imports are only allowed in matching categories, and high-impact tools are
+queued for review.
+
+For stronger isolation, run with Docker available so validation can use the
+Docker backend.
 
 ## Files
 
-- `src/RBForge/forge_tool.py`: complete Ornstein-facing meta-tool wrapper.
-- `examples/rbmem_tools_schema.rbmem`: full `tools.*` namespace example with a
-  profiler tool and a `web_bubble` tool.
-- `configs/unsloth_RBForge_sft_rl.yaml`: SFT + GRPO config with
-  tool-invention rewards, task rewards, and format rewards.
-- `scripts/demo_invention_loop.py`: mini invention loop with before/after
-  metrics.
-- `src/ornstein_rbforge/*`: earlier lower-level prototype modules kept for
-  compatibility with existing examples/tests.
+- `src/RBForge/forge_tool.py`: main public API with `forge_tool` and
+  `run_forged_tool`.
+- `src/ornstein_rbforge/*`: lower-level prototype modules kept for compatibility
+  with older examples and tests.
+- `examples/rbmem_tools_schema.rbmem`: example `tools.*` RBMEM namespace.
+- `configs/unsloth_RBForge_sft_rl.yaml`: training config for tool-invention
+  traces and reward shaping.
+- `scripts/demo_invention_loop.py`: miniature before-and-after invention loop.
+- `scripts/install_hermes_bridge.py`: local Hermes bridge installer.
 
 ## Test
 
@@ -126,7 +303,12 @@ export PYTHONPATH=src
 ruff check .
 python -m compileall -q src tests examples scripts
 pytest -q
+```
+
+After code changes, run:
+
+```shell
 graphify update .
 ```
 
-After code changes, `graphify update .` keeps `graphify-out/` current.
+This keeps `graphify-out/` current.
