@@ -1,0 +1,25 @@
+{
+  "files": {
+    "scripts\\demo_invention_loop.py": "code",
+    "examples\\starter_harness.py": "code",
+    "src\\RBForge\\__init__.py": "code",
+    "scripts\\demo_before_after.py": "code",
+    "README.md": "document",
+    "src\\ornstein_rbforge\\demo.py": "code",
+    "src\\ornstein_rbforge\\models.py": "code",
+    "src\\ornstein_rbforge\\__init__.py": "code",
+    "tests\\test_rbforge_public_api.py": "code",
+    "src\\ornstein_rbforge\\trajectory.py": "code",
+    "src\\RBForge\\forge_tool.py": "code",
+    "tests\\test_validation_and_sandbox.py": "code",
+    "examples\\forge_thread_tool.py": "code",
+    "src\\ornstein_rbforge\\rbmem.py": "code",
+    "src\\ornstein_rbforge\\validation.py": "code",
+    "src\\ornstein_rbforge\\forge.py": "code",
+    "src\\ornstein_rbforge\\harness.py": "code",
+    "assets\\RBForge-card.png": "image",
+    "tests\\test_rbmem_graph_patch.py": "code",
+    "scripts\\install_hermes_bridge.py": "code",
+    "src\\ornstein_rbforge\\sandbox.py": "code"
+  }
+}

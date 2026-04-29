@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.env
+.env.*
+build/
+dist/
+*.egg-info/
+memory.rbmem
+data/*.rbmem
+data/traces/*.jsonl
+data/traces/demo_before_after.md
+graphify-out/cache/
+forge_new_tool.py
