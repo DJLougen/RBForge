@@ -321,3 +321,7 @@ graphify update .
 ```
 
 This keeps `graphify-out/` current.
+
+## License
+
+RBForge is released under the [MIT License](LICENSE).
