@@ -12,6 +12,13 @@ stable RBMEM paths such as `tools.custom.count_tracebacks`, are indexed in
 `tools.registry`, and carry graph edges such as `depends_on`, `registered_in`,
 `categorized_as`, and `used_in`.
 
+## Start Here
+
+- New to RBForge: read the full [How-To Guide](docs/HOWTO.md).
+- Setting up an autonomous coding agent: point it at
+  [Agent Setup Brief](docs/AGENT_SETUP.md).
+- Need RBMEM itself: use [Rust-Brain](https://github.com/DJLougen/Rust-Brain).
+
 ## What It Does
 
 Most tool-use agents can call tools that already exist. RBForge adds a second
