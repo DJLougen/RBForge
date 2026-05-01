@@ -2,6 +2,16 @@
 
 All notable changes to RBForge will be documented here.
 
+## [0.4.0] - 2026-05-01
+
+### Added
+
+- Added deterministic debugger signal extraction for logs, tracebacks, failing
+  tests, suspect files, and exception types.
+- Added debugger-specific `rbforge doctor` metrics for debugger tool count,
+  validation rate, and average success rate.
+- Added debugger-use reward shaping and a debugger RL trace fixture.
+
 ## [0.3.0] - 2026-05-01
 
 ### Added

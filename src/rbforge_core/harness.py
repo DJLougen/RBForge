@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from rbforge_core.debugger import debugger_signal_report
 from rbforge_core.rbmem import RbmemStore
 
 
@@ -28,12 +29,7 @@ class ToolHarness:
         return completed.stdout
 
     def debugger_summary(self, text: str) -> dict[str, Any]:
-        return {
-            "traceback_count": text.count("Traceback"),
-            "error_lines": [
-                line for line in text.splitlines() if "Error" in line or "Exception" in line
-            ],
-        }
+        return debugger_signal_report(text)
 
     def call_forged(self, name: str, arguments: dict[str, Any]) -> Any:
         record = self._load_tool_record(name)

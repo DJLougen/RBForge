@@ -20,6 +20,10 @@ Those snippets disappear after the task. With RBForge, the agent can turn a
 snippet into a named tool, validate it, save it to RBMEM, and call it again
 later.
 
+For debugging, this means the agent can learn to use or forge compact helpers
+for traceback triage, failing-test clustering, suspect-file extraction, and
+lock-contention summaries instead of rereading raw logs every time.
+
 RBForge depends on the RBMEM format and CLI from
 [Rust-Brain](https://github.com/DJLougen/Rust-Brain). RBMEM is the durable
 memory layer. RBForge is the tool-forging layer that writes useful tool records
@@ -382,6 +386,18 @@ hermes -s RBForge
 When Hermes detects a reusable missing capability, it should call `forge_tool`.
 If the returned status is `registered`, it can immediately call
 `run_forged_tool`.
+
+## RL Debugger Signal
+
+The training config rewards debugger use when the model:
+
+- calls a debugger before patching,
+- extracts a root cause from debugger output,
+- reuses an existing debugger tool when one exists,
+- forges a reusable debugger only when the missing capability is real.
+
+It penalizes skipping an available debugger, ignoring debugger output, or
+forging duplicate low-value debugging helpers.
 
 ## Agent Prompt Pattern
 

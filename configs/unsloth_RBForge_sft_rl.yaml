@@ -16,6 +16,7 @@ datasets:
       - forge_tool.sandbox_finished
       - forge_tool.registered
       - forge_tool.used
+      - debugger.used
     ddm_filters:
       require_registered_tool: true
       require_downstream_success: true
@@ -29,6 +30,9 @@ datasets:
       - cross_file_refactor
       - web_honeypot_research
       - ml_training_bugs
+      - failing_test_triage
+      - traceback_root_cause
+      - lock_contention_debugging
 
 sft:
   framework: unsloth
@@ -68,6 +72,7 @@ grpo:
   reward_weights:
     tool_invention_reward: 1.5
     task_success_reward: 1.0
+    debugger_use_reward: 0.75
     format_reward: 0.25
   tool_invention_reward:
     success_bonus: 0.45
@@ -85,6 +90,15 @@ grpo:
     perf_improvement: 0.30
     steps_reduction: 0.25
     regression_penalty: -0.75
+  debugger_use_reward:
+    used_before_patch_bonus: 0.25
+    extracted_root_cause_bonus: 0.30
+    reused_existing_debugger_bonus: 0.20
+    forged_reusable_debugger_bonus: 0.25
+    penalties:
+      skipped_available_debugger: -0.25
+      debug_output_not_used: -0.30
+      forged_duplicate_debugger: -0.20
   format_reward:
     valid_think_tags: 0.08
     valid_hermes_tool_call_json: 0.10
@@ -99,7 +113,11 @@ evaluation:
     - heldout_reuse_success_rate
     - downstream_task_success
     - average_turn_reduction
+    - debugger_use_rate
+    - debugger_root_cause_accuracy
+    - debugger_reuse_success_rate
   gates:
     min_rbmem_validation_rate: 0.99
     min_tool_test_pass_rate: 0.90
     min_heldout_reuse_success_rate: 0.65
+    min_debugger_use_rate: 0.70

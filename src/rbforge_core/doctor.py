@@ -69,6 +69,9 @@ def build_report(
     average_success_rate = (
         round(sum(success_rates) / len(success_rates), 4) if success_rates else None
     )
+    category_metrics = _category_metrics(tool_records)
+    debugger_records = [record for record in tool_records if _is_debugger_tool(record)]
+    debugger_rates = list(_success_rates(debugger_records))
     forged_tools = len(tool_records)
     validation_rate = round(validated_tools / forged_tools, 4) if forged_tools else None
 
@@ -89,6 +92,12 @@ def build_report(
         "validated_tools": validated_tools,
         "validation_rate": validation_rate,
         "average_success_rate": average_success_rate,
+        "category_metrics": category_metrics,
+        "debugger_tools": len(debugger_records),
+        "debugger_validation_rate": _validation_rate(debugger_records),
+        "debugger_average_success_rate": (
+            round(sum(debugger_rates) / len(debugger_rates), 4) if debugger_rates else None
+        ),
     }
 
 
@@ -106,6 +115,12 @@ def format_text_report(report: dict[str, Any]) -> str:
         f"validated-tools: {report['validated_tools']}",
         f"validation-rate: {_format_percent(report.get('validation_rate'))}",
         f"average-success-rate: {_format_percent(report.get('average_success_rate'))}",
+        f"debugger-tools: {report.get('debugger_tools', 0)}",
+        f"debugger-validation-rate: {_format_percent(report.get('debugger_validation_rate'))}",
+        (
+            "debugger-average-success-rate: "
+            f"{_format_percent(report.get('debugger_average_success_rate'))}"
+        ),
     ]
     if not memory_file.get("exists_before_check", True) and memory_file.get("exists"):
         lines.append("note: memory file was created during the check")
@@ -187,6 +202,18 @@ def _is_validated(record: dict[str, Any]) -> bool:
     return bool(record.get("_registry_entry")) and status in {"", "validated", "registered"}
 
 
+def _is_debugger_tool(record: dict[str, Any]) -> bool:
+    category = str(record.get("category", "")).lower()
+    dependencies = record.get("dependencies", [])
+    if isinstance(dependencies, str):
+        dependency_text = dependencies.lower()
+    elif isinstance(dependencies, list):
+        dependency_text = " ".join(str(item).lower() for item in dependencies)
+    else:
+        dependency_text = ""
+    return category == "debugger" or "debugger" in dependency_text
+
+
 def _success_rates(records: list[dict[str, Any]]) -> Sequence[float]:
     rates: list[float] = []
     for record in records:
@@ -197,6 +224,33 @@ def _success_rates(records: list[dict[str, Any]]) -> Sequence[float]:
         if isinstance(raw_rate, int | float):
             rates.append(float(raw_rate))
     return rates
+
+
+def _category_metrics(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    categories: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        category = str(record.get("category") or "unknown")
+        categories.setdefault(category, []).append(record)
+    return {
+        category: {
+            "tools": len(items),
+            "validated_tools": sum(1 for item in items if _is_validated(item)),
+            "validation_rate": _validation_rate(items),
+            "average_success_rate": _average_success_rate(items),
+        }
+        for category, items in sorted(categories.items())
+    }
+
+
+def _validation_rate(records: list[dict[str, Any]]) -> float | None:
+    if not records:
+        return None
+    return round(sum(1 for record in records if _is_validated(record)) / len(records), 4)
+
+
+def _average_success_rate(records: list[dict[str, Any]]) -> float | None:
+    rates = list(_success_rates(records))
+    return round(sum(rates) / len(rates), 4) if rates else None
 
 
 def _memory_health(doctor_payload: dict[str, Any]) -> str:

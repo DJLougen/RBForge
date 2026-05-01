@@ -29,6 +29,8 @@ class DoctorStore:
                 "name": "demo",
                 "section": "tools.custom.demo",
                 "status": "validated",
+                "category": "debugger",
+                "dependencies": [],
                 "success_rate": 0.75,
             }
         ]
@@ -51,6 +53,8 @@ class DoctorStore:
                         {
                             "name": "demo",
                             "status": "validated",
+                            "category": "debugger",
+                            "dependencies": [],
                             "metrics": {"success_rate": 0.75},
                         }
                     ),
@@ -71,6 +75,10 @@ def test_doctor_report_collects_versions_health_and_metrics(tmp_path: Path) -> N
     assert report["validated_tools"] == 1
     assert report["validation_rate"] == 1.0
     assert report["average_success_rate"] == 0.75
+    assert report["debugger_tools"] == 1
+    assert report["debugger_validation_rate"] == 1.0
+    assert report["debugger_average_success_rate"] == 0.75
+    assert report["category_metrics"]["debugger"]["tools"] == 1
 
 
 def test_text_report_formats_easy_to_read_metrics(tmp_path: Path) -> None:
@@ -82,6 +90,7 @@ def test_text_report_formats_easy_to_read_metrics(tmp_path: Path) -> None:
     assert "memory-health: ok" in text
     assert "validation-rate: 100.0%" in text
     assert "average-success-rate: 75.0%" in text
+    assert "debugger-tools: 1" in text
 
 
 def test_run_doctor_uses_real_store_arguments(monkeypatch: Any, tmp_path: Path) -> None:

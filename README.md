@@ -40,6 +40,8 @@ RBForge can:
 - Persist validated tools into a `.rbmem` memory file.
 - Register each tool in `tools.registry` so an agent can discover and reuse it.
 - Track usage metrics such as success count, failure count, and success rate.
+- Track debugger-specific health so debugging tools can be measured separately
+  from general forged tools.
 - Queue high-impact tools for review instead of activating them automatically.
 
 RBForge is useful for agents that repeatedly need custom analysis, debugging,
@@ -172,6 +174,14 @@ Expected result:
 
 ```python
 {"traceback_count": 2}
+```
+
+`rbforge doctor` reports debugger tools separately from the full registry:
+
+```text
+debugger-tools: 1
+debugger-validation-rate: 100.0%
+debugger-average-success-rate: 100.0%
 ```
 
 ## Example: Summarize TODOs
@@ -339,7 +349,7 @@ Docker backend.
   API, examples, and tests.
 - `examples/rbmem_tools_schema.rbmem`: example `tools.*` RBMEM namespace.
 - `configs/unsloth_RBForge_sft_rl.yaml`: training config for tool-invention
-  traces and reward shaping.
+  traces, debugger-use rewards, and reward shaping.
 - `scripts/demo_invention_loop.py`: miniature before-and-after invention loop.
 - `scripts/install_hermes_bridge.py`: local Hermes bridge installer.
 
