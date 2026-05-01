@@ -91,6 +91,16 @@ If no CLI is found, RBForge can clone and build
 
 Check that RBForge can see a compatible RBMEM CLI:
 
+```shell
+rbforge doctor memory.rbmem
+```
+
+For agent-readable diagnostics:
+
+```shell
+rbforge doctor memory.rbmem --format json
+```
+
 ```python
 from rbforge_core.rbmem import RbmemStore
 
@@ -303,6 +313,7 @@ RBForge now uses machine-readable RBMEM commands:
 - `rbmem hermes doctor --format json` through `RbmemStore.doctor()`
 - `rbmem query --format json` through `RbmemStore.context(...)`
 - `rbmem --version` through `RbmemStore.rbmem_version()`
+- `rbforge doctor` for a quick combined RBForge/RBMEM health and metrics check
 
 Forge results include:
 

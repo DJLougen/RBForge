@@ -2,6 +2,16 @@
 
 All notable changes to RBForge will be documented here.
 
+## [0.3.0] - 2026-05-01
+
+### Added
+
+- Added `rbforge doctor` for one-command RBForge and RBMEM health checks.
+- Reports RBForge version, RBMEM CLI version, memory file health, registry size,
+  forged tool count, validation rate, and average success rate.
+- Added JSON output with the `rbforge.doctor.v1` schema for agent-readable
+  diagnostics.
+
 ## [0.2.0] - 2026-05-01
 
 ### Added

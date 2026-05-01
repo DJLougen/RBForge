@@ -92,6 +92,11 @@ pytest -q
 
 You can also check RBMEM integration directly:
 
+```shell
+rbforge doctor memory.rbmem
+rbforge doctor memory.rbmem --format json
+```
+
 ```python
 from rbforge_core.rbmem import RbmemStore
 
@@ -332,6 +337,7 @@ review_queued
 After forging a tool, inspect the memory file with Rust-Brain:
 
 ```shell
+rbforge doctor memory.rbmem
 rbmem validate memory.rbmem
 rbmem read memory.rbmem tools.registry
 rbmem read memory.rbmem tools.custom.count_tracebacks
