@@ -1,17 +1,17 @@
-# Community 19: ornstein_rbforge.models.ToolSpec
+# Community 19: rbforge_core.models.ToolSpec
 
 **Members:** 4
 
 ## Nodes
 
-- **__init__** (`src_ornstein_rbforge_init_py`, File, degree: 3)
-- **ornstein_rbforge.forge.forge_tool** (`src_ornstein_rbforge_init_py_import_ornstein_rbforge_forge_forge_tool`, Module, degree: 1)
-- **ornstein_rbforge.models.ForgeResult** (`src_ornstein_rbforge_init_py_import_ornstein_rbforge_models_forgeresult`, Module, degree: 1)
-- **ornstein_rbforge.models.ToolSpec** (`src_ornstein_rbforge_init_py_import_ornstein_rbforge_models_toolspec`, Module, degree: 1)
+- **__init__** (`src_rbforge_core_init_py`, File, degree: 3)
+- **rbforge_core.forge.forge_tool** (`src_rbforge_core_init_py_import_rbforge_core_forge_forge_tool`, Module, degree: 1)
+- **rbforge_core.models.ForgeResult** (`src_rbforge_core_init_py_import_rbforge_core_models_forgeresult`, Module, degree: 1)
+- **rbforge_core.models.ToolSpec** (`src_rbforge_core_init_py_import_rbforge_core_models_toolspec`, Module, degree: 1)
 
 ## Relationships
 
-- src_ornstein_rbforge_init_py → src_ornstein_rbforge_init_py_import_ornstein_rbforge_forge_forge_tool (imports)
-- src_ornstein_rbforge_init_py → src_ornstein_rbforge_init_py_import_ornstein_rbforge_models_forgeresult (imports)
-- src_ornstein_rbforge_init_py → src_ornstein_rbforge_init_py_import_ornstein_rbforge_models_toolspec (imports)
+- src_rbforge_core_init_py → src_rbforge_core_init_py_import_rbforge_core_forge_forge_tool (imports)
+- src_rbforge_core_init_py → src_rbforge_core_init_py_import_rbforge_core_models_forgeresult (imports)
+- src_rbforge_core_init_py → src_rbforge_core_init_py_import_rbforge_core_models_toolspec (imports)
 

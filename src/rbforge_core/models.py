@@ -54,3 +54,5 @@ class ForgeResult:
     registry_size: int
     review_required: bool = False
     message: str = ""
+    rbmem_diagnostics: dict[str, Any] | None = None
+    rbmem_context_preview: str = ""

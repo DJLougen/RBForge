@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ornstein_rbforge.models import utc_now_iso
+from rbforge_core.models import utc_now_iso
 
 
 class TrajectoryLogger:

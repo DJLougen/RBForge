@@ -77,6 +77,9 @@ $env:RBMEM_CLI = "C:\path\to\rbmem.exe"
 If `rbmem` is not found, RBForge can clone and build Rust-Brain automatically
 when it needs the CLI, assuming Git and Cargo are installed.
 
+For best results, use Rust-Brain / RBMEM `v0.4.0` or newer. RBForge uses its
+JSON diagnostics and JSON context assembly commands.
+
 ## Verify Setup
 
 Run:
@@ -85,6 +88,16 @@ Run:
 export PYTHONPATH=src
 python -m compileall -q src tests examples scripts
 pytest -q
+```
+
+You can also check RBMEM integration directly:
+
+```python
+from rbforge_core.rbmem import RbmemStore
+
+store = RbmemStore("memory.rbmem")
+print(store.rbmem_version())
+print(store.doctor()["hermes_load"]["status"])
 ```
 
 PowerShell:

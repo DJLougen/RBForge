@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ornstein_rbforge import forge_tool
-from ornstein_rbforge.harness import ToolHarness
+from rbforge_core import forge_tool
+from rbforge_core.harness import ToolHarness
 
 
 def main() -> None:

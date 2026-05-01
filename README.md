@@ -12,6 +12,10 @@ stable RBMEM paths such as `tools.custom.count_tracebacks`, are indexed in
 `tools.registry`, and carry graph edges such as `depends_on`, `registered_in`,
 `categorized_as`, and `used_in`.
 
+Current RBForge versions use RBMEM `v0.4` JSON output for diagnostics and
+context retrieval. That means RBForge can ask the memory file for structured
+health checks and task-specific context instead of scraping minified text.
+
 ## Start Here
 
 - New to RBForge: read the full [How-To Guide](docs/HOWTO.md).
@@ -84,6 +88,16 @@ $env:RBMEM_CLI = "C:\path\to\rbmem.exe"
 
 If no CLI is found, RBForge can clone and build
 [Rust-Brain](https://github.com/DJLougen/Rust-Brain) with Cargo.
+
+Check that RBForge can see a compatible RBMEM CLI:
+
+```python
+from rbforge_core.rbmem import RbmemStore
+
+store = RbmemStore("memory.rbmem")
+print(store.rbmem_version())
+print(store.doctor()["hermes_load"]["status"])
+```
 
 ## Quick Start
 
@@ -282,6 +296,19 @@ A registered tool record includes:
 The registry entry is stored under `tools.registry`, and the full tool record is
 stored under `tools.custom.{name}`.
 
+## RBMEM v0.4 Integration
+
+RBForge now uses machine-readable RBMEM commands:
+
+- `rbmem hermes doctor --format json` through `RbmemStore.doctor()`
+- `rbmem query --format json` through `RbmemStore.context(...)`
+- `rbmem --version` through `RbmemStore.rbmem_version()`
+
+Forge results include:
+
+- `rbmem_diagnostics`: parse, validation, section, graph, and Hermes-load health
+- `rbmem_context_preview`: a task-specific context slice for the forged tool
+
 ## Safety Model
 
 RBForge is not a general-purpose arbitrary code execution system. It uses a
@@ -297,8 +324,8 @@ Docker backend.
 
 - `src/RBForge/forge_tool.py`: main public API with `forge_tool` and
   `run_forged_tool`.
-- `src/ornstein_rbforge/*`: lower-level prototype modules kept for compatibility
-  with older examples and tests.
+- `src/rbforge_core/*`: lower-level implementation modules used by the public
+  API, examples, and tests.
 - `examples/rbmem_tools_schema.rbmem`: example `tools.*` RBMEM namespace.
 - `configs/unsloth_RBForge_sft_rl.yaml`: training config for tool-invention
   traces and reward shaping.

@@ -4,12 +4,12 @@
 
 ## Nodes
 
-- **demo** (`src_ornstein_rbforge_demo_py`, File, degree: 2)
-- **ornstein_rbforge.forge.forge_tool** (`src_ornstein_rbforge_demo_py_import_ornstein_rbforge_forge_forge_tool`, Module, degree: 1)
-- **main()** (`src_ornstein_rbforge_demo_py_main`, Function, degree: 1)
+- **demo** (`src_rbforge_core_demo_py`, File, degree: 2)
+- **rbforge_core.forge.forge_tool** (`src_rbforge_core_demo_py_import_rbforge_core_forge_forge_tool`, Module, degree: 1)
+- **main()** (`src_rbforge_core_demo_py_main`, Function, degree: 1)
 
 ## Relationships
 
-- src_ornstein_rbforge_demo_py → src_ornstein_rbforge_demo_py_import_ornstein_rbforge_forge_forge_tool (imports)
-- src_ornstein_rbforge_demo_py → src_ornstein_rbforge_demo_py_main (defines)
+- src_rbforge_core_demo_py → src_rbforge_core_demo_py_import_rbforge_core_forge_forge_tool (imports)
+- src_rbforge_core_demo_py → src_rbforge_core_demo_py_main (defines)
 

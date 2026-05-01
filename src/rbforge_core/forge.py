@@ -1,15 +1,15 @@
-"""Meta-tool entry point used by Ornstein/Hermes agents."""
+"""Meta-tool entry point used by Hermes agents."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from ornstein_rbforge.models import ForgeResult, ToolSpec
-from ornstein_rbforge.rbmem import RbmemStore
-from ornstein_rbforge.sandbox import SandboxExecutor
-from ornstein_rbforge.trajectory import TrajectoryLogger
-from ornstein_rbforge.validation import validate_tool_spec
+from rbforge_core.models import ForgeResult, ToolSpec
+from rbforge_core.rbmem import RbmemStore
+from rbforge_core.sandbox import SandboxExecutor
+from rbforge_core.trajectory import TrajectoryLogger
+from rbforge_core.validation import validate_tool_spec
 
 
 def forge_tool(
@@ -109,6 +109,8 @@ def forge_tool(
         registry_size=registry_size,
         review_required=review_required,
         message=_message(sandbox.ok, registered, review_required),
+        rbmem_diagnostics=store.doctor(),
+        rbmem_context_preview=store.context_preview(spec.name),
     )
 
 

@@ -131,8 +131,8 @@
 - rbmem
 - find_rbmem_cli()
 - json
-- ornstein_rbforge.models.ToolSpec
-- ornstein_rbforge.models.utc_now_iso
+- rbforge_core.models.ToolSpec
+- rbforge_core.models.utc_now_iso
 - os
 - pathlib.Path
 - re
@@ -168,8 +168,8 @@
 - generate_python_unittest()
 - ast
 - json
-- ornstein_rbforge.models.SandboxResult
-- ornstein_rbforge.models.ToolSpec
+- rbforge_core.models.SandboxResult
+- rbforge_core.models.ToolSpec
 - pathlib.Path
 - shutil
 - subprocess
@@ -195,12 +195,12 @@
 
 - forge
 - forge_tool()
-- ornstein_rbforge.models.ForgeResult
-- ornstein_rbforge.models.ToolSpec
-- ornstein_rbforge.rbmem.RbmemStore
-- ornstein_rbforge.sandbox.SandboxExecutor
-- ornstein_rbforge.trajectory.TrajectoryLogger
-- ornstein_rbforge.validation.validate_tool_spec
+- rbforge_core.models.ForgeResult
+- rbforge_core.models.ToolSpec
+- rbforge_core.rbmem.RbmemStore
+- rbforge_core.sandbox.SandboxExecutor
+- rbforge_core.trajectory.TrajectoryLogger
+- rbforge_core.validation.validate_tool_spec
 - pathlib.Path
 - typing.Any
 - _message()
@@ -209,7 +209,7 @@
 
 - validation
 - ast
-- ornstein_rbforge.models.ToolSpec
+- rbforge_core.models.ToolSpec
 - re
 - typing.Any
 - ToolSpecError
@@ -244,7 +244,7 @@
 
 - trajectory
 - json
-- ornstein_rbforge.models.utc_now_iso
+- rbforge_core.models.utc_now_iso
 - pathlib.Path
 - typing.Any
 - TrajectoryLogger
@@ -255,7 +255,7 @@
 
 - harness
 - json
-- ornstein_rbforge.rbmem.RbmemStore
+- rbforge_core.rbmem.RbmemStore
 - pathlib.Path
 - re
 - subprocess
@@ -275,7 +275,7 @@
 ### Community 15 — test_apply_graph_inserts_relations_without_touching_temporal() (7 nodes, cohesion: 0.29)
 
 - test_rbmem_graph_patch
-- ornstein_rbforge.rbmem.RbmemStore
+- rbforge_core.rbmem.RbmemStore
 - pathlib.Path
 - NoopRbmemStore
 - .__init__()
@@ -285,10 +285,10 @@
 ### Community 16 — test_validation_rejects_bad_name() (7 nodes, cohesion: 0.29)
 
 - test_validation_and_sandbox
-- ornstein_rbforge.models.ToolSpec
-- ornstein_rbforge.sandbox.SandboxExecutor
-- ornstein_rbforge.validation.ToolSpecError
-- ornstein_rbforge.validation.validate_tool_spec
+- rbforge_core.models.ToolSpec
+- rbforge_core.sandbox.SandboxExecutor
+- rbforge_core.validation.ToolSpecError
+- rbforge_core.validation.validate_tool_spec
 - test_valid_python_tool_passes_local_sandbox()
 - test_validation_rejects_bad_name()
 
@@ -304,22 +304,22 @@
 ### Community 18 — main() (18) (5 nodes, cohesion: 0.40)
 
 - starter_harness
-- ornstein_rbforge.forge_tool
-- ornstein_rbforge.harness.ToolHarness
+- rbforge_core.forge_tool
+- rbforge_core.harness.ToolHarness
 - pathlib.Path
 - main()
 
-### Community 19 — ornstein_rbforge.models.ToolSpec (4 nodes, cohesion: 0.50)
+### Community 19 — rbforge_core.models.ToolSpec (4 nodes, cohesion: 0.50)
 
 - __init__
-- ornstein_rbforge.forge.forge_tool
-- ornstein_rbforge.models.ForgeResult
-- ornstein_rbforge.models.ToolSpec
+- rbforge_core.forge.forge_tool
+- rbforge_core.models.ForgeResult
+- rbforge_core.models.ToolSpec
 
 ### Community 20 — main() (3 nodes, cohesion: 0.67)
 
 - demo
-- ornstein_rbforge.forge.forge_tool
+- rbforge_core.forge.forge_tool
 - main()
 
 ### Community 21 — main() (21) (3 nodes, cohesion: 0.67)
@@ -334,10 +334,10 @@
 - RBForge.forge_tool.forge_tool
 - RBForge.forge_tool.run_forged_tool
 
-### Community 23 — ornstein_rbforge.forge_tool (2 nodes, cohesion: 1.00)
+### Community 23 — rbforge_core.forge_tool (2 nodes, cohesion: 1.00)
 
 - forge_thread_tool
-- ornstein_rbforge.forge_tool
+- rbforge_core.forge_tool
 
 ## 🕳️ Knowledge Gaps
 

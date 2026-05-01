@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from ornstein_rbforge.models import ToolSpec, utc_now_iso
+from rbforge_core.models import ToolSpec, utc_now_iso
 
 
 class RbmemError(RuntimeError):
@@ -45,7 +45,7 @@ class RbmemStore:
                 "--created-by",
                 "rbforge",
                 "--purpose",
-                "ornstein-runtime-tool-memory",
+                "RBForge-runtime-tool-memory",
             ]
         )
 
@@ -76,7 +76,15 @@ class RbmemStore:
             }
         )
         registry.sort(key=lambda item: item["name"])
-        self.update_section("tools.registry", "json", {"tools": registry})
+        self.update_section(
+            "tools.registry",
+            "json",
+            {
+                "schema": "rbforge.tool_registry.v1",
+                "updated_by": "RBForge",
+                "tools": registry,
+            },
+        )
         self.apply_graph(
             spec.section_path,
             node_type="tool",
@@ -86,16 +94,27 @@ class RbmemStore:
         return len(registry)
 
     def read_registry(self) -> list[dict[str, Any]]:
-        text = self.read_minified()
-        match = re.search(r"\[tools\.registry\]\s+json\s+(\{.*?\})(?:\n\[|\Z)", text, re.S)
-        if not match:
-            return []
         try:
-            payload = json.loads(match.group(1))
-        except json.JSONDecodeError:
+            payload = self.context("tools registry", resolve=True, minified=False, graph_depth=1)
+        except RbmemError:
             return []
-        tools = payload.get("tools", [])
-        return tools if isinstance(tools, list) else []
+        for section in payload.get("sections", []):
+            if section.get("path") == "tools.registry":
+                try:
+                    content = json.loads(section.get("content") or "{}")
+                except json.JSONDecodeError:
+                    return []
+                tools = content.get("tools", [])
+                return tools if isinstance(tools, list) else []
+        return []
+
+    def load_tool_record(self, name: str) -> dict[str, Any]:
+        payload = self.context(f"tools custom {name}", resolve=True, minified=False, graph_depth=1)
+        section_path = f"tools.custom.{name}"
+        for section in payload.get("sections", []):
+            if section.get("path") == section_path:
+                return json.loads(section["content"])
+        raise KeyError(f"forged tool not found in RBMEM: {section_path}")
 
     def update_section(self, section: str, section_type: str, content: Any) -> None:
         body = (
@@ -134,6 +153,58 @@ class RbmemStore:
             capture=True,
         )
         return completed.stdout
+
+    def rbmem_version(self) -> str:
+        completed = self._run([self.rbmem_cli, "--version"], capture=True)
+        return completed.stdout.strip()
+
+    def doctor(self) -> dict[str, Any]:
+        self.ensure()
+        completed = self._run(
+            [
+                self.rbmem_cli,
+                "hermes",
+                "doctor",
+                str(self.memory_path),
+                "--rbmem-cli",
+                self.rbmem_cli,
+                "--format",
+                "json",
+            ],
+            capture=True,
+        )
+        return json.loads(completed.stdout)
+
+    def context(
+        self,
+        query: str,
+        *,
+        resolve: bool = True,
+        minified: bool = True,
+        graph_depth: int = 1,
+    ) -> dict[str, Any]:
+        self.ensure()
+        args = [
+            self.rbmem_cli,
+            "query",
+            str(self.memory_path),
+            query,
+            "--graph-depth",
+            str(graph_depth),
+            "--format",
+            "json",
+        ]
+        if resolve:
+            args.append("--resolve")
+        if minified:
+            args.append("--minified")
+        completed = self._run(args, capture=True)
+        return json.loads(completed.stdout)
+
+    def context_preview(self, query: str, *, limit: int = 1200) -> str:
+        payload = self.context(query, resolve=True, minified=True, graph_depth=1)
+        context = payload.get("context", "")
+        return context[:limit] if isinstance(context, str) else ""
 
     def hermes_load(self, *, resolve: bool = True, minified: bool = True) -> dict[str, Any]:
         self.ensure()
@@ -223,6 +294,7 @@ def tool_record(
         "version": spec.version,
         "status": status,
         "validation": validation_summary or {},
+        "record_schema": "rbforge.forged_tool.v1",
         "timestamp_policy": "rbmem_cli_owned",
     }
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ornstein_rbforge import forge_tool
+from rbforge_core import forge_tool
 
 if __name__ == "__main__":
     result = forge_tool(

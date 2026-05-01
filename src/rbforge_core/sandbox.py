@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from ornstein_rbforge.models import SandboxResult, ToolSpec
+from rbforge_core.models import SandboxResult, ToolSpec
 
 
 class SandboxExecutor:

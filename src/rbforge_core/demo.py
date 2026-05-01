@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ornstein_rbforge.forge import forge_tool
+from rbforge_core.forge import forge_tool
 
 
 def main() -> None:

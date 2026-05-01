@@ -4,7 +4,7 @@ Example:
     $env:PYTHONPATH = "src"
     python scripts/demo_invention_loop.py
 
-The script simulates an Ornstein/Hermes trace with ``<think>`` and a JSON tool
+The script simulates an Hermes trace with ``<think>`` and a JSON tool
 call, forges a missing profiler helper, persists it to RBMEM, then immediately
 reuses the new tool on the next step.
 """
@@ -30,7 +30,7 @@ FORGED_IMPLEMENTATION = (
     "    return {'wait_count': len(waits), 'hotspots': hotspots, 'waits': waits}\n"
 )
 
-MOCK_ORNSTEIN_TRACE = """
+MOCK_RBFORGE_TRACE = """
 <think>
 The debugger and ripgrep can find raw thread lines, but I need a durable helper
 that ranks lock hotspots. I will forge it and reuse it immediately.
@@ -55,7 +55,7 @@ that ranks lock hotspots. I will forge it and reuse it immediately.
     "category": "profiler",
     "dependencies": ["tools.builtin.debugger", "tools.builtin.ripgrep"],
     "expected_output_keys": ["wait_count", "hotspots", "waits"],
-    "forged_by": "ornstein-hermes-3.6-27b-saber"
+    "forged_by": "rbforge-agent"
   }
 }
 </tool_call>
@@ -66,13 +66,13 @@ def main() -> None:
     """Forge one tool, show RBMEM persistence, and reuse it immediately."""
     memory_path = Path("data/demo_RBForge.rbmem")
     trace_path = Path("data/traces/demo_invention_loop.jsonl")
-    tool_call = _extract_tool_call(MOCK_ORNSTEIN_TRACE)
+    tool_call = _extract_tool_call(MOCK_RBFORGE_TRACE)
     args = tool_call["arguments"]
 
     print("=== RBForge Mini Demo ===")
     print("Before: raw debugger/ripgrep loop needed 19 turns.")
     print("Mock model thought:")
-    print(_extract_think(MOCK_ORNSTEIN_TRACE))
+    print(_extract_think(MOCK_RBFORGE_TRACE))
 
     forge_result = forge_tool(
         **args,

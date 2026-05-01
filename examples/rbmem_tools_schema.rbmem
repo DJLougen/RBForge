@@ -43,7 +43,7 @@ temporal:
   expires_at: null
 content: |
   {
-    "schema": "ornstein.tool_registry.v1",
+    "schema": "rbforge.tool_registry.v1",
     "tools": [
       {
         "name": "analyze_thread_contention",
@@ -92,7 +92,7 @@ temporal:
   expires_at: null
 content: |
   {
-    "record_schema": "ornstein.forged_tool.v1",
+    "record_schema": "rbforge.forged_tool.v1",
     "name": "analyze_thread_contention",
     "description": "Summarize Python thread dumps and identify lock contention hotspots.",
     "schema": {
@@ -106,7 +106,7 @@ content: |
     "dependencies": ["tools.builtin.debugger", "tools.builtin.ripgrep"],
     "version": "0.1.0",
     "status": "validated",
-    "forged_by": "ornstein-hermes-3.6-27b-saber",
+    "forged_by": "rbforge-agent",
     "metrics": {
       "usage_count": 17,
       "success_count": 16,
@@ -137,7 +137,7 @@ temporal:
   expires_at: null
 content: |
   {
-    "record_schema": "ornstein.forged_tool.v1",
+    "record_schema": "rbforge.forged_tool.v1",
     "name": "extract_honeypot_links",
     "description": "Extract same-origin honeypot links from sanitized HTML research pages.",
     "schema": {
@@ -154,7 +154,7 @@ content: |
     "dependencies": ["tools.builtin.web_bubble"],
     "version": "0.1.0",
     "status": "human_reviewed",
-    "forged_by": "ornstein-hermes-3.6-35b-saber",
+    "forged_by": "rbforge-agent",
     "metrics": {
       "usage_count": 5,
       "success_count": 4,

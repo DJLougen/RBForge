@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from ornstein_rbforge.rbmem import RbmemStore
+from rbforge_core.rbmem import RbmemStore
 
 
 class ToolHarness:
@@ -70,9 +70,4 @@ class ToolHarness:
         return json.loads(completed.stdout)
 
     def _load_tool_record(self, name: str) -> dict[str, Any]:
-        payload = self.store.hermes_load(resolve=True, minified=False)
-        section = f"tools.custom.{name}"
-        for item in payload.get("sections", []):
-            if item.get("path") == section:
-                return json.loads(item["content"])
-        raise KeyError(f"forged tool not found in RBMEM: {name}")
+        return self.store.load_tool_record(name)

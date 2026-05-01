@@ -1,6 +1,6 @@
 """RBForge meta-tool.
 
-This module is the Ornstein-facing runtime tool creation layer. It validates a
+This module is the agent-facing runtime tool creation layer. It validates a
 model-proposed tool, persists it into Rust-Brain RBMEM under
 ``tools.custom.{name}``, sandbox-runs generated tests, registers graph edges,
 and returns clean JSON that can be emitted from Hermes-style tool calls inside
@@ -121,7 +121,7 @@ class ToolSpec:
     expected_args: dict[str, Any] | None = None
     expected_output_keys: list[str] = field(default_factory=list)
     review_required: bool = False
-    forged_by: str = "ornstein-hermes"
+    forged_by: str = "rbforge-agent"
     version: str = "0.1.0"
 
     @property
@@ -157,13 +157,13 @@ def forge_tool(
     rbmem_cli: str | None = None,
     trace_path: str | Path | None = "data/traces/RBForge.jsonl",
     review_required: bool = False,
-    forged_by: str = "ornstein-hermes",
+    forged_by: str = "rbforge-agent",
     timeout_seconds: int = 8,
 ) -> dict[str, Any]:
     """Create, validate, persist, and register a runtime tool.
 
     Returns:
-        A JSON-serializable dict. Ornstein can directly use this as the
+        A JSON-serializable dict. Agents can directly use this as the
         observation for a Hermes-compatible ``forge_tool`` tool call.
     """
     spec = ToolSpec(
@@ -234,7 +234,7 @@ def forge_tool(
         status = "sandbox_failed"
 
     store.validate()
-    context = store.read_minified()
+    context = store.context_preview(spec.name)
     return {
         "ok": sandbox.ok,
         "status": status,
@@ -245,11 +245,12 @@ def forge_tool(
         "review_required": review,
         "sandbox": asdict(sandbox),
         "graph_edges": _relations(spec, registered=status == "registered"),
+        "rbmem_diagnostics": store.doctor(),
         "hermes_next_step": {
             "call": spec.name if status == "registered" else None,
             "arguments_schema": spec.schema,
         },
-        "rbmem_context_preview": context[:1200],
+        "rbmem_context_preview": context,
     }
 
 
@@ -347,7 +348,7 @@ class RbmemStore:
                 "--created-by",
                 "rbforge",
                 "--purpose",
-                "ornstein-runtime-tool-memory",
+                "RBForge-runtime-tool-memory",
             ]
         )
 
@@ -394,7 +395,7 @@ class RbmemStore:
         self.update_section(
             "tools.registry",
             {
-                "schema": "ornstein.tool_registry.v1",
+                "schema": "rbforge.tool_registry.v1",
                 "updated_by": "RBForge",
                 "tools": registry,
             },
@@ -408,7 +409,7 @@ class RbmemStore:
 
     def read_registry(self) -> list[dict[str, Any]]:
         try:
-            payload = self.hermes_load(resolve=True, minified=False)
+            payload = self.context("tools registry", resolve=True, minified=False, graph_depth=1)
         except Exception:  # noqa: BLE001 - corrupted/empty registry should self-heal
             return []
         for section in payload.get("sections", []):
@@ -419,7 +420,7 @@ class RbmemStore:
         return []
 
     def load_tool_record(self, name: str) -> dict[str, Any]:
-        payload = self.hermes_load(resolve=True, minified=False)
+        payload = self.context(f"tools custom {name}", resolve=True, minified=False, graph_depth=1)
         section_path = f"tools.custom.{name}"
         for section in payload.get("sections", []):
             if section.get("path") == section_path:
@@ -432,6 +433,58 @@ class RbmemStore:
             capture=True,
         )
         return completed.stdout
+
+    def rbmem_version(self) -> str:
+        completed = self._run([self.rbmem_cli, "--version"], capture=True)
+        return completed.stdout.strip()
+
+    def doctor(self) -> dict[str, Any]:
+        self.ensure()
+        completed = self._run(
+            [
+                self.rbmem_cli,
+                "hermes",
+                "doctor",
+                str(self.memory_path),
+                "--rbmem-cli",
+                self.rbmem_cli,
+                "--format",
+                "json",
+            ],
+            capture=True,
+        )
+        return json.loads(completed.stdout)
+
+    def context(
+        self,
+        query: str,
+        *,
+        resolve: bool = True,
+        minified: bool = True,
+        graph_depth: int = 1,
+    ) -> dict[str, Any]:
+        self.ensure()
+        args = [
+            self.rbmem_cli,
+            "query",
+            str(self.memory_path),
+            query,
+            "--graph-depth",
+            str(graph_depth),
+            "--format",
+            "json",
+        ]
+        if resolve:
+            args.append("--resolve")
+        if minified:
+            args.append("--minified")
+        completed = self._run(args, capture=True)
+        return json.loads(completed.stdout)
+
+    def context_preview(self, query: str, *, limit: int = 1200) -> str:
+        payload = self.context(query, resolve=True, minified=True, graph_depth=1)
+        context = payload.get("context", "")
+        return context[:limit] if isinstance(context, str) else ""
 
     def hermes_load(self, *, resolve: bool = True, minified: bool = True) -> dict[str, Any]:
         args = [self.rbmem_cli, "hermes", "load", str(self.memory_path)]
@@ -895,7 +948,7 @@ def _tool_record(
     sandbox: SandboxReport | None = None,
 ) -> dict[str, Any]:
     return {
-        "record_schema": "ornstein.forged_tool.v1",
+        "record_schema": "rbforge.forged_tool.v1",
         "name": spec.name,
         "description": spec.description,
         "schema": spec.schema,

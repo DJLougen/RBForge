@@ -1,5 +1,5 @@
 {
-  "model": "ornstein-hermes-35b-moe",
+  "model": "rbforge-agent",
   "task": "Fix intermittent training deadlock caused by dataloader workers waiting on a shared cache lock.",
   "trajectory": [
     {

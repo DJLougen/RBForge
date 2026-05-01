@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from ornstein_rbforge.models import ToolSpec
-from ornstein_rbforge.sandbox import SandboxExecutor
-from ornstein_rbforge.validation import ToolSpecError, validate_tool_spec
+from rbforge_core.models import ToolSpec
+from rbforge_core.sandbox import SandboxExecutor
+from rbforge_core.validation import ToolSpecError, validate_tool_spec
 
 
 def test_valid_python_tool_passes_local_sandbox() -> None:

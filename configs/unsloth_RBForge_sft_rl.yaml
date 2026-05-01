@@ -1,6 +1,6 @@
 project: RBForge
-base_model: DJLougen/Ornstein-Hermes-3.6-27b-SABER
-fallback_base_model: DJLougen/Ornstein-Hermes-3.6-35b-SABER
+base_model: DJLougen/RBForge-Hermes-3.6-27b-SABER
+fallback_base_model: DJLougen/RBForge-Hermes-3.6-35b-SABER
 chat_template: hermes
 reasoning_format:
   think_open: "<think>"

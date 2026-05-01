@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "RBForge"
-version = "0.1.0"
-description = "Runtime tool forging, validation, and RBMEM persistence for Ornstein/Hermes agents."
+version = "0.2.0"
+description = "Runtime tool forging, validation, and RBMEM persistence for Hermes agents."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
@@ -17,7 +17,7 @@ dependencies = ["jsonschema>=4.21", "PyYAML>=6.0"]
 dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.8", "jsonschema>=4.21"]
 
 [project.scripts]
-rbforge-demo = "ornstein_rbforge.demo:main"
+rbforge-demo = "rbforge_core.demo:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

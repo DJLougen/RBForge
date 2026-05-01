@@ -6,7 +6,7 @@ import ast
 import re
 from typing import Any
 
-from ornstein_rbforge.models import ToolSpec
+from rbforge_core.models import ToolSpec
 
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 _ALLOWED_SCHEMA_TYPES = {"object", "string", "number", "integer", "boolean", "array", "null"}
