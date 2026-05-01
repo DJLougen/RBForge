@@ -99,6 +99,7 @@ You can also check RBMEM integration directly:
 ```shell
 rbforge doctor memory.rbmem
 rbforge doctor memory.rbmem --format json
+rbforge eval debugger
 ```
 
 ```python
@@ -398,6 +399,21 @@ The training config rewards debugger use when the model:
 
 It penalizes skipping an available debugger, ignoring debugger output, or
 forging duplicate low-value debugging helpers.
+
+Run the local debugger eval to make the signal concrete:
+
+```shell
+rbforge eval debugger
+```
+
+The output is intentionally compact:
+
+```text
+debugger-use-rate: 100.0%
+root-cause-hit-rate: 100.0%
+avg-turn-reduction: 42.9%
+reusable-debuggers-created: 2
+```
 
 ## Agent Prompt Pattern
 

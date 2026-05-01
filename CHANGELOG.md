@@ -2,6 +2,15 @@
 
 All notable changes to RBForge will be documented here.
 
+## [0.5.0] - 2026-05-01
+
+### Added
+
+- Added `rbforge eval debugger` for deterministic debugger-first vs
+  no-debugger benchmark reporting.
+- Added debugger eval fixtures with root-cause, turn-reduction, and reusable
+  debugger metrics.
+
 ## [0.4.0] - 2026-05-01
 
 ### Added

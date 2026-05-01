@@ -1,0 +1,62 @@
+{
+  "schema": "rbforge.eval.debugger_cases.v1",
+  "cases": [
+    {
+      "id": "cache-lock-timeout",
+      "family": "traceback_root_cause",
+      "log": "FAILED tests/test_cache.py::test_lock_timeout\nTraceback (most recent call last):\n  File \"app/cache.py\", line 42, in get\nTimeoutError: lock wait exceeded\nAssertionError: expected cache hit",
+      "expected": {
+        "exception": "TimeoutError",
+        "file": "app/cache.py",
+        "test": "tests/test_cache.py::test_lock_timeout"
+      },
+      "baseline": {
+        "turns": 7,
+        "root_cause_hit": false
+      },
+      "debugger": {
+        "used": true,
+        "turns": 4,
+        "reusable_debugger_created": true
+      }
+    },
+    {
+      "id": "json-report-parse",
+      "family": "failing_test_triage",
+      "log": "ERROR tests/test_reports.py::test_json_summary\nTraceback (most recent call last):\n  File \"rbforge/reports.py\", line 18, in parse\nJSONDecodeError: Expecting value\nValueError: invalid report payload",
+      "expected": {
+        "exception": "JSONDecodeError",
+        "file": "rbforge/reports.py",
+        "test": "tests/test_reports.py::test_json_summary"
+      },
+      "baseline": {
+        "turns": 6,
+        "root_cause_hit": true
+      },
+      "debugger": {
+        "used": true,
+        "turns": 3,
+        "reusable_debugger_created": false
+      }
+    },
+    {
+      "id": "worker-deadlock",
+      "family": "lock_contention_debugging",
+      "log": "FAILED tests/test_workers.py::test_no_deadlock\nThread-A waiting on lock cache_index\nThread-B waiting on lock cache_index\nTraceback (most recent call last):\n  File \"workers/pool.py\", line 88, in join\nDeadlockError: worker pool did not drain",
+      "expected": {
+        "exception": "DeadlockError",
+        "file": "workers/pool.py",
+        "test": "tests/test_workers.py::test_no_deadlock"
+      },
+      "baseline": {
+        "turns": 8,
+        "root_cause_hit": false
+      },
+      "debugger": {
+        "used": true,
+        "turns": 5,
+        "reusable_debugger_created": true
+      }
+    }
+  ]
+}

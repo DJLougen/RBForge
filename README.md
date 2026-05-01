@@ -184,6 +184,16 @@ debugger-validation-rate: 100.0%
 debugger-average-success-rate: 100.0%
 ```
 
+To measure whether debugger-first behavior is helping, run:
+
+```shell
+rbforge eval debugger
+```
+
+The eval compares replayed debugger-first trajectories against no-debugger
+baselines and reports root-cause hit rate, turn reduction, and reusable debugger
+creation.
+
 ## Example: Summarize TODOs
 
 This creates a lightweight project-scanning helper that summarizes TODO-style
@@ -324,6 +334,7 @@ RBForge now uses machine-readable RBMEM commands:
 - `rbmem query --format json` through `RbmemStore.context(...)`
 - `rbmem --version` through `RbmemStore.rbmem_version()`
 - `rbforge doctor` for a quick combined RBForge/RBMEM health and metrics check
+- `rbforge eval debugger` for a deterministic debugger-first benchmark
 
 Forge results include:
 
@@ -350,6 +361,8 @@ Docker backend.
 - `examples/rbmem_tools_schema.rbmem`: example `tools.*` RBMEM namespace.
 - `configs/unsloth_RBForge_sft_rl.yaml`: training config for tool-invention
   traces, debugger-use rewards, and reward shaping.
+- `examples/debugger_eval_cases.json`: replay cases for debugger-first
+  evaluation.
 - `scripts/demo_invention_loop.py`: miniature before-and-after invention loop.
 - `scripts/install_hermes_bridge.py`: local Hermes bridge installer.
 
