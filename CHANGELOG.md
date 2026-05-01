@@ -2,6 +2,15 @@
 
 All notable changes to RBForge will be documented here.
 
+## [0.6.0] - 2026-05-01
+
+### Added
+
+- Expanded the debugger eval benchmark from 3 cases to 15 cases across
+  traceback, test, lock, config, data, API, filesystem, async, CLI, cache, and
+  RBMEM graph debugging families.
+- Added per-family debugger eval metrics.
+
 ## [0.5.0] - 2026-05-01
 
 ### Added

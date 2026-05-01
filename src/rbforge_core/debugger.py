@@ -6,7 +6,9 @@ import re
 from collections import Counter
 from typing import Any
 
-_EXCEPTION_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b")
+_EXCEPTION_RE = re.compile(
+    r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception)|SystemExit|KeyboardInterrupt)\b"
+)
 _FILE_RE = re.compile(r'File "([^"]+)", line (\d+)')
 _TEST_RE = re.compile(r"\b(?:FAILED|ERROR)\s+([^\s:]+(?:::[^\s:]+)*)")
 

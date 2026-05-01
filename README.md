@@ -194,6 +194,18 @@ The eval compares replayed debugger-first trajectories against no-debugger
 baselines and reports root-cause hit rate, turn reduction, and reusable debugger
 creation.
 
+Current broad fixture:
+
+```text
+cases: 15
+families: 13
+root-cause-hit-rate: 100.0%
+baseline-root-cause-hit-rate: 40.0%
+avg-turn-reduction: 44.3%
+estimated-turns-saved: 47
+reusable-debuggers-created: 9
+```
+
 ## Example: Summarize TODOs
 
 This creates a lightweight project-scanning helper that summarizes TODO-style

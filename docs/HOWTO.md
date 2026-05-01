@@ -411,8 +411,10 @@ The output is intentionally compact:
 ```text
 debugger-use-rate: 100.0%
 root-cause-hit-rate: 100.0%
-avg-turn-reduction: 42.9%
-reusable-debuggers-created: 2
+baseline-root-cause-hit-rate: 40.0%
+avg-turn-reduction: 44.3%
+estimated-turns-saved: 47
+reusable-debuggers-created: 9
 ```
 
 ## Agent Prompt Pattern

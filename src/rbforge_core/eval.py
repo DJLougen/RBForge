@@ -63,19 +63,24 @@ def build_debugger_eval(cases: list[dict[str, Any]]) -> dict[str, Any]:
     debugger_turns = sum(result["debugger_turns"] for result in results)
     turn_delta = baseline_turns - debugger_turns
     debugger_scores = [result["debugger_signal_score"] for result in results]
+    families = _family_metrics(results)
 
     return {
         "schema": "rbforge.eval.debugger.v1",
         "cases": case_count,
+        "families": len(families),
         "debugger_use_rate": _ratio(debugger_used, case_count),
         "root_cause_hit_rate": _ratio(debugger_hits, case_count),
         "baseline_root_cause_hit_rate": _ratio(baseline_hits, case_count),
         "avg_turn_reduction": _ratio(turn_delta, baseline_turns),
+        "baseline_turns": baseline_turns,
+        "debugger_turns": debugger_turns,
         "estimated_turns_saved": turn_delta,
         "reusable_debuggers_created": reusable_debuggers_created,
         "avg_debugger_signal_score": (
             round(sum(debugger_scores) / len(debugger_scores), 4) if debugger_scores else None
         ),
+        "family_metrics": families,
         "results": results,
     }
 
@@ -85,6 +90,7 @@ def format_debugger_eval(report: dict[str, Any]) -> str:
         [
             "RBForge debugger eval",
             f"cases: {report['cases']}",
+            f"families: {report.get('families', 0)}",
             f"debugger-use-rate: {_format_percent(report.get('debugger_use_rate'))}",
             f"root-cause-hit-rate: {_format_percent(report.get('root_cause_hit_rate'))}",
             (
@@ -171,6 +177,31 @@ def _contains_item(items: Any, expected: Any) -> bool | None:
 
 def _ratio(numerator: int, denominator: int) -> float | None:
     return round(numerator / denominator, 4) if denominator else None
+
+
+def _family_metrics(results: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for result in results:
+        grouped.setdefault(str(result["family"]), []).append(result)
+
+    metrics: dict[str, dict[str, Any]] = {}
+    for family, items in sorted(grouped.items()):
+        baseline_turns = sum(int(item["baseline_turns"]) for item in items)
+        debugger_turns = sum(int(item["debugger_turns"]) for item in items)
+        metrics[family] = {
+            "cases": len(items),
+            "root_cause_hit_rate": _ratio(
+                sum(1 for item in items if item["debugger_root_cause_hit"]),
+                len(items),
+            ),
+            "baseline_root_cause_hit_rate": _ratio(
+                sum(1 for item in items if item["baseline_root_cause_hit"]),
+                len(items),
+            ),
+            "avg_turn_reduction": _ratio(baseline_turns - debugger_turns, baseline_turns),
+            "turns_saved": baseline_turns - debugger_turns,
+        }
+    return metrics
 
 
 def _format_percent(value: Any) -> str:
