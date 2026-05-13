@@ -291,6 +291,8 @@ def tool_record(
         "category": spec.category,
         "dependencies": spec.dependencies,
         "language": spec.language,
+        "language_config": spec.language_config,
+        "runtime_limits": spec.runtime_limits,
         "version": spec.version,
         "status": status,
         "validation": validation_summary or {},

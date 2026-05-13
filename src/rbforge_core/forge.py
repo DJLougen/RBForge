@@ -8,6 +8,7 @@ from typing import Any
 from rbforge_core.models import ForgeResult, ToolSpec
 from rbforge_core.rbmem import RbmemStore
 from rbforge_core.sandbox import SandboxExecutor
+from rbforge_core.telemetry import JsonlTelemetrySink, emit_event
 from rbforge_core.trajectory import TrajectoryLogger
 from rbforge_core.validation import validate_tool_spec
 
@@ -22,6 +23,8 @@ def forge_tool(
     dependencies: list[str] | None = None,
     memory_path: str | Path = "memory.rbmem",
     language: str = "python",
+    language_config: dict[str, Any] | None = None,
+    runtime_limits: dict[str, Any] | None = None,
     expected_args: dict[str, Any] | None = None,
     expected_output_keys: list[str] | None = None,
     high_impact: bool = False,
@@ -42,6 +45,8 @@ def forge_tool(
         category=category,
         dependencies=dependencies or [],
         language=language,  # type: ignore[arg-type]
+        language_config=language_config or {},
+        runtime_limits=runtime_limits or {},
         expected_args=expected_args,
         expected_output_keys=expected_output_keys or [],
         high_impact=high_impact,
@@ -52,6 +57,8 @@ def forge_tool(
     logger = TrajectoryLogger(trace_path) if trace_path else None
     if logger:
         logger.record("forge_requested", {"tool": name, "category": category})
+    telemetry = JsonlTelemetrySink(trace_path) if trace_path else None
+    emit_event(telemetry, "tool_forged", {"tool": name, "category": category, "phase": "requested"})
 
     store.persist_candidate(spec)
     if logger:
@@ -86,6 +93,11 @@ def forge_tool(
         registered = True
         if logger:
             logger.record("tool_registered", {"tool": name, "registry_size": registry_size})
+        emit_event(
+            telemetry,
+            "tool_forged",
+            {"tool": name, "category": category, "phase": "registered"},
+        )
     elif review_required and sandbox.ok:
         store.update_section(
             f"tools.review_queue.{name}",

@@ -14,7 +14,7 @@ class DoctorStore:
         self.rbmem_cli = "rbmem"
 
     def rbmem_version(self) -> str:
-        return "rbmem 0.4.0"
+        return "rbmem 1.4.0"
 
     def doctor(self) -> dict[str, Any]:
         self.memory_path.write_text("memory", encoding="utf-8")
@@ -68,7 +68,8 @@ def test_doctor_report_collects_versions_health_and_metrics(tmp_path: Path) -> N
 
     assert report["schema"] == "rbforge.doctor.v1"
     assert report["rbforge_version"] == "0.test"
-    assert report["rbmem_cli_version"] == "rbmem 0.4.0"
+    assert report["rbmem_cli_version"] == "rbmem 1.4.0"
+    assert report["rbmem_compatibility"]["ok"] is True
     assert report["memory_file"]["health"] == "ok"
     assert report["registry_size"] == 1
     assert report["forged_tools"] == 1

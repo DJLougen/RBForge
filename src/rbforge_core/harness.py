@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-import json
-import re
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import Any
 
+from rbforge_core.ab_tester import run_ab_test
 from rbforge_core.debugger import debugger_signal_report
+from rbforge_core.improver import ToolImprover
 from rbforge_core.rbmem import RbmemStore
+from rbforge_core.registry import audit_registry
+from rbforge_core.runner import run_forged_tool
 
 
 class ToolHarness:
@@ -18,8 +19,11 @@ class ToolHarness:
         self,
         memory_path: str | Path = "memory.rbmem",
         rbmem_cli: str | None = None,
+        store: Any | None = None,
     ) -> None:
-        self.store = RbmemStore(memory_path, rbmem_cli=rbmem_cli)
+        self.memory_path = memory_path
+        self.rbmem_cli = rbmem_cli
+        self.store = store or RbmemStore(memory_path, rbmem_cli=rbmem_cli)
 
     def ripgrep(self, pattern: str, root: str | Path = ".") -> str:
         cmd = ["rg", "-n", pattern, str(root)]
@@ -32,38 +36,31 @@ class ToolHarness:
         return debugger_signal_report(text)
 
     def call_forged(self, name: str, arguments: dict[str, Any]) -> Any:
-        record = self._load_tool_record(name)
-        if record.get("language") != "python":
-            raise RuntimeError(
-                f"only python forged tools are callable in this starter harness: {name}"
-            )
-        implementation = record["implementation"]
-        function_name = (
-            name if re.search(rf"def\s+{re.escape(name)}\s*\(", implementation) else "run"
+        result = run_forged_tool(
+            name,
+            arguments,
+            memory_path=self.memory_path,
+            rbmem_cli=self.rbmem_cli,
+            store=self.store,
+            resolve_dependencies=True,
+            telemetry=None,
         )
-        with tempfile.TemporaryDirectory(prefix="RBForge-call-") as tmp:
-            root = Path(tmp)
-            (root / "tool_impl.py").write_text(implementation, encoding="utf-8")
-            runner = root / "runner.py"
-            runner.write_text(
-                "import importlib, json, sys\n"
-                "args = json.loads(sys.argv[1])\n"
-                "mod = importlib.import_module('tool_impl')\n"
-                f"result = getattr(mod, {function_name!r})(**args)\n"
-                "print(json.dumps(result))\n",
-                encoding="utf-8",
-            )
-            completed = subprocess.run(
-                ["python", str(runner), json.dumps(arguments)],
-                cwd=root,
-                text=True,
-                capture_output=True,
-                timeout=8,
-                check=False,
-            )
-        if completed.returncode != 0:
-            raise RuntimeError(completed.stderr.strip())
-        return json.loads(completed.stdout)
+        if not result["ok"]:
+            raise RuntimeError(result["error"])
+        return result["result"]
+
+    def improve_forged(self, name: str, *, auto_apply: bool = False) -> Any:
+        return ToolImprover(self.store).improve_tool(name, auto_apply=auto_apply)
+
+    def ab_test_forged(
+        self,
+        tool_names: list[str],
+        sample_inputs: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return run_ab_test(tool_names, sample_inputs, store=self.store)
+
+    def audit_forged_registry(self, *, dry_run: bool = True) -> list[dict[str, Any]]:
+        return audit_registry(store=self.store, dry_run=dry_run)
 
     def _load_tool_record(self, name: str) -> dict[str, Any]:
         return self.store.load_tool_record(name)

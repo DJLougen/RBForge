@@ -21,11 +21,16 @@ def validate_tool_spec(spec: ToolSpec) -> None:
         raise ToolSpecError("tool name must be snake_case, start with a letter, and be 3-64 chars")
     if not spec.description.strip() or len(spec.description.strip()) < 12:
         raise ToolSpecError("description must be a clear one-sentence purpose")
-    if spec.language not in {"python", "bash", "rust"}:
+    if spec.language not in {"python", "bash", "rust", "wasm", "deno", "typescript"}:
         raise ToolSpecError(f"unsupported language: {spec.language}")
     _validate_schema_shape(spec.schema)
     if spec.language == "python":
         _validate_python_source(spec)
+    elif spec.language in {"deno", "typescript"}:
+        if "run" not in spec.implementation and "entry_point" not in spec.language_config:
+            raise ToolSpecError("deno/typescript tools must provide run(...) or entry_point")
+    elif spec.language == "wasm" and not spec.implementation.strip():
+        raise ToolSpecError("wasm implementation must contain base64-encoded module bytes")
 
 
 def _validate_schema_shape(schema: dict[str, Any]) -> None:

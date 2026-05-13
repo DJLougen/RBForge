@@ -4,12 +4,48 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 import shutil
 import subprocess
+import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from rbforge_core.models import SandboxResult, ToolSpec
+
+
+@dataclass(frozen=True)
+class ResourceLimits:
+    cpu_sec: int = 5
+    memory_mb: int = 256
+    file_mb: int = 16
+
+    @property
+    def timeout_seconds(self) -> int:
+        return self.cpu_sec + 2
+
+    @classmethod
+    def from_mapping(cls, values: dict[str, object] | None) -> ResourceLimits:
+        values = values or {}
+        return cls(
+            cpu_sec=int(values.get("cpu_sec", cls.cpu_sec)),
+            memory_mb=int(values.get("memory_mb", cls.memory_mb)),
+            file_mb=int(values.get("file_mb", cls.file_mb)),
+        )
+
+
+_CATEGORY_LIMITS = {
+    "analysis": ResourceLimits(cpu_sec=5, memory_mb=256),
+    "debugger": ResourceLimits(cpu_sec=10, memory_mb=512),
+    "profiler": ResourceLimits(cpu_sec=10, memory_mb=512),
+    "memory": ResourceLimits(cpu_sec=5, memory_mb=256),
+    "shell": ResourceLimits(cpu_sec=5, memory_mb=256),
+}
+
+
+def default_limits_for_category(category: str) -> ResourceLimits:
+    return _CATEGORY_LIMITS.get(category, _CATEGORY_LIMITS["analysis"])
 
 
 class SandboxExecutor:
@@ -38,7 +74,12 @@ class SandboxExecutor:
             test_file.write_text(generated_test, encoding="utf-8")
             if self.prefer_docker and _docker_is_ready(self.timeout_seconds):
                 return self._run_docker(root, generated_test, warnings)
-            return self._run_local(root, generated_test, warnings)
+            limits = (
+                ResourceLimits.from_mapping(spec.runtime_limits)
+                if spec.runtime_limits
+                else default_limits_for_category(spec.category)
+            )
+            return self._run_local(root, generated_test, warnings, limits)
 
     def _run_docker(
         self,
@@ -76,15 +117,17 @@ class SandboxExecutor:
         root: Path,
         generated_test: str,
         warnings: list[str],
+        limits: ResourceLimits,
     ) -> SandboxResult:
-        cmd = ["python", "-m", "unittest", "-v", "test_tool.py"]
+        cmd = [sys.executable, "-m", "unittest", "-v", "test_tool.py"]
         return _run(
             cmd,
             "local-subprocess",
-            self.timeout_seconds,
+            limits.timeout_seconds,
             generated_test,
             warnings,
             cwd=root,
+            limits=limits,
         )
 
 
@@ -180,7 +223,9 @@ def _run(
     generated_test: str,
     warnings: list[str],
     cwd: Path | None = None,
+    limits: ResourceLimits | None = None,
 ) -> SandboxResult:
+    preexec_fn = _resource_preexec(limits)
     try:
         completed = subprocess.run(
             cmd,
@@ -189,6 +234,7 @@ def _run(
             capture_output=True,
             timeout=timeout_seconds,
             check=False,
+            preexec_fn=preexec_fn,
         )
     except subprocess.TimeoutExpired as exc:
         return SandboxResult(
@@ -209,6 +255,22 @@ def _run(
         generated_test=generated_test,
         static_warnings=warnings,
     )
+
+
+def _resource_preexec(limits: ResourceLimits | None) -> object | None:
+    if limits is None or os.name != "posix":
+        return None
+
+    def apply_limits() -> None:
+        import resource
+
+        resource.setrlimit(resource.RLIMIT_CPU, (limits.cpu_sec, limits.cpu_sec))
+        memory_bytes = limits.memory_mb * 1024 * 1024
+        resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
+        file_bytes = limits.file_mb * 1024 * 1024
+        resource.setrlimit(resource.RLIMIT_FSIZE, (file_bytes, file_bytes))
+
+    return apply_limits
 
 
 def _docker_is_ready(timeout_seconds: int) -> bool:

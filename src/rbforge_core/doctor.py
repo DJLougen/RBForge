@@ -10,6 +10,7 @@ from typing import Any, Protocol
 
 from rbforge_core import __version__
 from rbforge_core.rbmem import RbmemStore
+from rbforge_core.version import check_rbmem_compatibility
 
 
 class DoctorStore(Protocol):
@@ -60,6 +61,7 @@ def build_report(
     memory_path = Path(store.memory_path)
     existed_before_check = memory_path.exists()
     rbmem_version = store.rbmem_version()
+    compatibility = check_rbmem_compatibility(rbmem_version)
     doctor_payload = store.doctor()
     exists_after_check = memory_path.exists()
     registry = store.read_registry()
@@ -79,6 +81,7 @@ def build_report(
         "schema": "rbforge.doctor.v1",
         "rbforge_version": rbforge_version,
         "rbmem_cli_version": rbmem_version,
+        "rbmem_compatibility": compatibility.__dict__,
         "memory_path": str(memory_path),
         "memory_file": {
             "exists_before_check": existed_before_check,
@@ -108,6 +111,7 @@ def format_text_report(report: dict[str, Any]) -> str:
         "RBForge doctor",
         f"rbforge-version: {report['rbforge_version']}",
         f"rbmem-version: {report['rbmem_cli_version']}",
+        f"rbmem-compatible: {report['rbmem_compatibility']['ok']}",
         f"memory: {report['memory_path']}",
         f"memory-health: {memory_file.get('health', 'unknown')} ({size} bytes)",
         f"registry-size: {report['registry_size']}",

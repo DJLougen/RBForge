@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-ToolLanguage = Literal["python", "bash", "rust"]
+ToolLanguage = Literal["python", "bash", "rust", "wasm", "deno", "typescript"]
 
 
 def utc_now_iso() -> str:
@@ -22,6 +22,8 @@ class ToolSpec:
     category: str
     dependencies: list[str] = field(default_factory=list)
     language: ToolLanguage = "python"
+    language_config: dict[str, Any] = field(default_factory=dict)
+    runtime_limits: dict[str, Any] = field(default_factory=dict)
     version: str = "0.1.0"
     expected_args: dict[str, Any] | None = None
     expected_output_keys: list[str] = field(default_factory=list)
