@@ -2,6 +2,26 @@
 
 All notable changes to RBForge will be documented here.
 
+## Unreleased
+
+### Added
+
+- Added Phase 2 runtime building blocks: tool improvement proposals, dependency resolution, A/B testing, structured telemetry, version compatibility checks, and resource limit helpers.
+- Added a `ToolRunner` abstraction with CPython, Deno/TypeScript, and optional Wasmtime runners.
+- Added dependency-aware `run_forged_tool(..., resolve_dependencies=True)` in `rbforge_core.runner`.
+- Added `rbforge improve <tool> <memory.rbmem> --propose-only|--auto-apply`.
+- Added an HTTP client for Rust-Brain server mode.
+- Added registry audit/deprecation helpers and signed marketplace import/export helpers.
+- Added optional MCP server scaffolding with `scripts/mcp_server.py`.
+- Bumped RBForge to `1.0.0` and added an explicit `rbmem >= 1.4.0` compatibility check.
+- Added a local cross-project compatibility test for the Rust-Brain `rbmem` CLI when it is available.
+- Added P3 hardening tests for signed marketplace round trips, tamper rejection, registry archival, HTTP client request/error behavior, and MCP handlers without requiring optional MCP dependencies.
+
+### Changed
+
+- Registry audit now archives weak or stale tools, tombstones the active tool record, and removes archived tools from the active registry.
+- MCP server logic now has pure handlers that can be tested independently from the optional MCP transport package.
+
 ## [0.6.0] - 2026-05-01
 
 ### Added

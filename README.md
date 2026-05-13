@@ -12,9 +12,9 @@ stable RBMEM paths such as `tools.custom.count_tracebacks`, are indexed in
 `tools.registry`, and carry graph edges such as `depends_on`, `registered_in`,
 `categorized_as`, and `used_in`.
 
-Current RBForge versions use RBMEM `v0.4` JSON output for diagnostics and
-context retrieval. That means RBForge can ask the memory file for structured
-health checks and task-specific context instead of scraping minified text.
+RBForge `1.0.0` expects Rust-Brain/RBMEM `1.4.0` or newer. It uses JSON
+diagnostics, context retrieval, graph export, encryption-aware reads, and server
+mode when available instead of scraping minified text.
 
 ## Start Here
 
@@ -43,6 +43,12 @@ RBForge can:
 - Track debugger-specific health so debugging tools can be measured separately
   from general forged tools.
 - Queue high-impact tools for review instead of activating them automatically.
+- Resolve declared tool dependencies, run them in topological order, and pass
+  their outputs as context to dependent tools.
+- Propose improvements when recent failures show repeatable error patterns.
+- Compare forged variants with A/B tests over shared sample inputs.
+- Run Python tools today, with Deno/TypeScript and WASM runner adapters
+  available for environments that install those runtimes.
 
 RBForge is useful for agents that repeatedly need custom analysis, debugging,
 data cleanup, log inspection, report generation, or lightweight workflow tools.
@@ -50,12 +56,14 @@ data cleanup, log inspection, report generation, or lightweight workflow tools.
 ## How It Works
 
 1. An agent notices a reusable missing capability.
-2. It calls `forge_tool` with a complete Python implementation and JSON schema.
+2. It calls `forge_tool` with a complete implementation and JSON schema.
 3. RBForge validates the schema and source code.
 4. RBForge runs generated tests against sample inputs.
 5. If validation passes, RBForge saves the tool into RBMEM.
 6. The agent calls `run_forged_tool` with normal arguments.
 7. RBForge updates metrics and keeps the tool available for later sessions.
+8. RBForge can later improve, archive, export, import, or A/B test the tool
+   without losing its RBMEM history.
 
 The important part is persistence: the result is not just a one-off code block.
 It becomes a named tool in durable memory.
@@ -64,8 +72,12 @@ It becomes a named tool in durable memory.
 
 - Python 3.10 or newer
 - `jsonschema`
+- `packaging`
 - `PyYAML`
+- `structlog`
 - Optional: Docker for stronger sandbox validation
+- Optional: `deno`, `wasmtime`, `mcp`, or `cryptography` for TypeScript,
+  WASM, MCP, and signed marketplace workflows
 - Optional but recommended: the `rbmem` CLI from
   [Rust-Brain](https://github.com/DJLougen/Rust-Brain)
 
@@ -97,6 +109,9 @@ Check that RBForge can see a compatible RBMEM CLI:
 rbforge doctor memory.rbmem
 ```
 
+The doctor report includes an `rbmem-compatible` field. It should be `True`
+when `rbmem --version` reports `1.4.0` or newer.
+
 For agent-readable diagnostics:
 
 ```shell
@@ -109,6 +124,63 @@ from rbforge_core.rbmem import RbmemStore
 store = RbmemStore("memory.rbmem")
 print(store.rbmem_version())
 print(store.doctor()["hermes_load"]["status"])
+```
+
+## Phase 2 APIs
+
+Run dependency-aware tools:
+
+```python
+from rbforge_core.runner import run_forged_tool
+
+result = run_forged_tool(
+    "summarize_ticket",
+    {"text": "  BUG: cache miss  "},
+    memory_path="memory.rbmem",
+    resolve_dependencies=True,
+)
+```
+
+Forge a non-Python tool by declaring its runtime:
+
+```python
+from rbforge_core import forge_tool
+
+forge_tool(
+    name="deno_echo",
+    description="Echo text through a TypeScript runner.",
+    schema={"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]},
+    implementation="export function run(args) { return { text: args.text }; }",
+    category="analysis",
+    language="deno",
+    language_config={"entry_point": "run"},
+    runtime_limits={"cpu_sec": 3, "memory_mb": 128},
+)
+```
+
+Ask RBForge to propose an improvement:
+
+```shell
+rbforge improve extract_payload memory.rbmem --propose-only
+```
+
+A/B test variants:
+
+```python
+from rbforge_core.ab_tester import run_ab_test
+
+report = run_ab_test(
+    ["summarize_ticket", "summarize_ticket_v2"],
+    [{"text": "BUG: cache miss"}],
+    memory_path="memory.rbmem",
+)
+print(report["winner"])
+```
+
+MCP server entry point:
+
+```shell
+python scripts/mcp_server.py --memory-path memory.rbmem --transport stdio
 ```
 
 ## Quick Start
