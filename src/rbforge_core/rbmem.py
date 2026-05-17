@@ -50,19 +50,50 @@ class RbmemStore:
         )
 
     def persist_candidate(self, spec: ToolSpec) -> None:
+        """Persist a candidate tool, respecting high_impact gate."""
         self.ensure()
-        record = tool_record(spec, status="candidate")
-        self.update_section(spec.section_path, "json", record)
+        status = "pending_review" if spec.high_impact else "candidate"
+        record = tool_record(spec, status=status, validation_summary=None)
+        self.update_section(spec.section_path, "json", record, actor="rbforge")
         self.apply_graph(
             spec.section_path,
             node_type="tool",
             relations=_tool_relations(spec, registered=False),
         )
+        # Update registry with status field for review tracking
+        registry = self.read_registry()
+        registry = [item for item in registry if item.get("name") != spec.name]
+        registry.append(
+            {
+                "name": spec.name,
+                "section": spec.section_path,
+                "category": spec.category,
+                "version": spec.version,
+                "dependencies": spec.dependencies,
+                "registered_at": utc_now_iso(),
+                "status": status,
+            }
+        )
+        registry.sort(key=lambda item: item["name"])
+        self.update_section(
+            "tools.registry",
+            "json",
+            {
+                "schema": "rbforge.tool_registry.v1",
+                "updated_by": "RBForge",
+                "tools": registry,
+            },
+            actor="rbforge",
+        )
 
     def register_validated_tool(self, spec: ToolSpec, validation_summary: dict[str, Any]) -> int:
+        """Register a validated tool with actor attribution.
+        update_section() and apply_graph() each call validate() internally,
+        so no redundant self.validate() needed here.
+        """
         self.ensure()
         record = tool_record(spec, status="validated", validation_summary=validation_summary)
-        self.update_section(spec.section_path, "json", record)
+        self.update_section(spec.section_path, "json", record, actor="rbforge")
         registry = self.read_registry()
         registry = [item for item in registry if item.get("name") != spec.name]
         registry.append(
@@ -84,13 +115,13 @@ class RbmemStore:
                 "updated_by": "RBForge",
                 "tools": registry,
             },
+            actor="rbforge",
         )
         self.apply_graph(
             spec.section_path,
             node_type="tool",
             relations=_tool_relations(spec, registered=True),
         )
-        self.validate()
         return len(registry)
 
     def read_registry(self) -> list[dict[str, Any]]:
@@ -116,7 +147,7 @@ class RbmemStore:
                 return json.loads(section["content"])
         raise KeyError(f"forged tool not found in RBMEM: {section_path}")
 
-    def update_section(self, section: str, section_type: str, content: Any) -> None:
+    def update_section(self, section: str, section_type: str, content: Any, *, actor: str = "rbforge") -> None:
         body = (
             content if isinstance(content, str) else json.dumps(content, indent=2, sort_keys=True)
         )
@@ -140,6 +171,8 @@ class RbmemStore:
                     section_type,
                     "--content-file",
                     content_file,
+                    "--actor",
+                    actor,
                 ]
             )
         finally:
@@ -217,6 +250,7 @@ class RbmemStore:
         return json.loads(completed.stdout)
 
     def hermes_save(self, payload: dict[str, Any]) -> None:
+        """Save a full payload to RBMEM with actor attribution."""
         self.ensure()
         self._run(
             [
@@ -226,6 +260,8 @@ class RbmemStore:
                 str(self.memory_path),
                 "--json",
                 json.dumps(payload, separators=(",", ":")),
+                "--actor",
+                "rbforge",
             ]
         )
         self.validate()

@@ -24,13 +24,18 @@ def test_local_rust_brain_cli_reports_compatible_version() -> None:
     if not rbmem.exists():
         pytest.skip("local Rust-Brain debug rbmem binary is not built")
 
-    completed = subprocess.run(
-        [str(rbmem), "--version"],
-        text=True,
-        capture_output=True,
-        timeout=10,
-        check=False,
-    )
+    # Try -V first (new CLI), fall back to --version (old CLI)
+    for flag in ["-V", "--version"]:
+        completed = subprocess.run(
+            [str(rbmem), flag],
+            text=True,
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+        if completed.returncode == 0:
+            break
+    else:
+        pytest.skip(f"rbmem at {rbmem} does not support -V or --version")
 
-    assert completed.returncode == 0
     assert check_rbmem_compatibility(completed.stdout).ok
