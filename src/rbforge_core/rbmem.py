@@ -295,20 +295,8 @@ class RbmemStore:
     ) -> None:
         """Insert graph metadata after CLI section writes without touching timestamps."""
         text = self.memory_path.read_text(encoding="utf-8")
-        pattern = re.compile(
-            rf"(\[SECTION:\s*{re.escape(section)}\]\s*\n(?:type:\s*.*\n))"
-            r"(?:(graph:\n(?:  .*\n|    .*\n)+))?"
-            r"(temporal:\n)",
-            re.M,
-        )
         graph_block = _render_graph_block(node_type, relations)
-
-        def replace(match: re.Match[str]) -> str:
-            return f"{match.group(1)}{graph_block}{match.group(3)}"
-
-        new_text, count = pattern.subn(replace, text, count=1)
-        if count != 1:
-            raise RbmemError(f"could not find RBMEM section for graph patch: {section}")
+        new_text = patch_section_graph(text, section, node_type, relations)
         self.memory_path.write_text(new_text, encoding="utf-8")
         self.validate()
 
@@ -362,9 +350,66 @@ def _tool_relations(spec: ToolSpec, *, registered: bool) -> list[dict[str, str]]
     return relations
 
 
+def patch_section_graph(
+    rbmem_text: str,
+    section: str,
+    node_type: str,
+    relations: list[dict[str, str]],
+) -> str:
+    """Replace graph metadata inside one section, leaving temporal data intact.
+
+    This is a robust section-aware approach: finds the section by header,
+    strips any existing graph blocks, and inserts a fresh one after the type: line.
+    Handles duplicate graph blocks, missing graph blocks, and varying indentation.
+    """
+    header = f"[SECTION: {section}]"
+    start = rbmem_text.find(header)
+    if start == -1:
+        raise RbmemError(f"section not found for graph patch: {section}")
+    end = rbmem_text.find("[END SECTION]", start)
+    if end == -1:
+        raise RbmemError(f"section missing end marker: {section}")
+    end += len("[END SECTION]")
+    block = rbmem_text[start:end]
+    lines = block.splitlines(keepends=True)
+    cleaned = _remove_graph_blocks(lines)
+    insert_at = 1
+    for index, line in enumerate(cleaned):
+        if line.startswith("type:"):
+            insert_at = index + 1
+            break
+    graph_lines = _render_graph_block(node_type, relations).splitlines(keepends=True)
+    new_block = "".join(cleaned[:insert_at] + graph_lines + cleaned[insert_at:])
+    return rbmem_text[:start] + new_block + rbmem_text[end:]
+
+
+def _remove_graph_blocks(lines: list[str]) -> list[str]:
+    """Strip all graph: blocks from a section's lines."""
+    cleaned: list[str] = []
+    index = 0
+    while index < len(lines):
+        if lines[index].strip() != "graph:":
+            cleaned.append(lines[index])
+            index += 1
+            continue
+        index += 1
+        while index < len(lines):
+            stripped = lines[index].strip()
+            top_level = lines[index] and not lines[index].startswith((" ", "\t"))
+            if top_level and stripped not in {"", "graph:"}:
+                break
+            index += 1
+    return cleaned
+
+
 def _render_graph_block(node_type: str, relations: list[dict[str, str]]) -> str:
     lines = ["graph:\n", f"  node_type: {json.dumps(node_type)}\n", "  relations:\n"]
+    seen: set[tuple[str, str]] = set()
     for relation in relations:
+        key = (relation["to"], relation["type"])
+        if key in seen:
+            continue
+        seen.add(key)
         lines.append(f"    - to: {json.dumps(relation['to'])}\n")
         lines.append(f"      type: {json.dumps(relation['type'])}\n")
     return "".join(lines)

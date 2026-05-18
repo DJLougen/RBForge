@@ -29,7 +29,7 @@ from rbforge_core.health import (
 )
 from rbforge_core.improver import improve_tool
 from rbforge_core.models import ForgeResult, ToolSpec
-from rbforge_core.rbmem import RbmemStore
+from rbforge_core.rbmem import RbmemStore, patch_section_graph
 from rbforge_core.review import (
     ReviewQueue,
     ReviewStatus,
@@ -45,6 +45,7 @@ from rbforge_core.temporal import (
     TemporalResult,
 )
 from rbforge_core.version import RBFORGE_VERSION
+from rbforge_core.validation import validate_spec, validate_tool_spec, ToolSpecError, sample_args
 from rbforge_core.versioning import (
     create_snapshot,
     list_snapshots,
@@ -108,4 +109,10 @@ __all__ = [
     "queue_candidate",
     "get_pending_reviews",
     "update_review",
+    # Validation
+    "validate_spec",
+    "validate_tool_spec",
+    "ToolSpecError",
+    "sample_args",
+    "patch_section_graph",
 ]

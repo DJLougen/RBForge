@@ -162,14 +162,17 @@ class TestReviewIdGeneration:
         id2 = _generate_review_id("dup_tool")
         assert id1 != id2
 
-    def test_id_includes_hash_prefix(self) -> None:
+    def test_id_includes_random_suffix(self) -> None:
         id1 = _generate_review_id("abc")
         id2 = _generate_review_id("xyz")
-        # Different tool names → different MD5 hashes
+        # Format: {tool_name}_{8_hex_chars}
         parts1 = id1.split("_")
         parts2 = id2.split("_")
-        assert len(parts1) >= 3
-        assert len(parts2) >= 3
+        assert len(parts1) == 2
+        assert len(parts2) == 2
+        assert len(parts1[1]) == 8
+        assert len(parts2[1]) == 8
+        assert all(c in "0123456789abcdef" for c in parts1[1])
 
 
 class TestQueueCandidate:

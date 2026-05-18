@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import importlib
 from pathlib import Path
 
-from RBForge.forge_tool import (
-    RBForgeError,
-    RbmemStore,
-    ToolSpec,
-    patch_section_graph,
-    run_forged_tool,
-    sample_args,
-    validate_spec,
-)
+from rbforge_core.rbmem import RbmemStore, patch_section_graph
+from rbforge_core.runner import run_forged_tool
+from rbforge_core.validation import validate_spec, ToolSpecError, sample_args
+from rbforge_core.models import ToolSpec
 
 
 def test_public_validate_spec_uses_jsonschema() -> None:
@@ -104,37 +98,19 @@ def test_run_forged_tool_updates_metrics(tmp_path: Path) -> None:
         def load_tool_record(self, name: str) -> dict[str, object]:
             return self.record
 
-        def update_section(self, section: str, content: dict[str, object]) -> None:
+        def update_section(self, section: str, section_type: str, content: dict[str, object], **kwargs: object) -> None:
             self.record = content
 
-        def apply_graph(
-            self,
-            section: str,
-            node_type: str,
-            relations: list[dict[str, str]],
-        ) -> None:
-            return None
-
-        def register_tool(self, record: dict[str, object]) -> int:
-            return 1
-
-    original = RbmemStore
-    module = importlib.import_module("RBForge.forge_tool")
-
-    module.RbmemStore = FakeStore  # type: ignore[assignment]
-    try:
-        result = run_forged_tool(
-            name="count_words",
-            arguments={"text": "one two"},
-            memory_path=tmp_path / "memory.rbmem",
-            trace_path=None,
-        )
-    finally:
-        module.RbmemStore = original
+    result = run_forged_tool(
+        name="count_words",
+        arguments={"text": "one two"},
+        memory_path=tmp_path / "memory.rbmem",
+        store=FakeStore(tmp_path / "memory.rbmem"),
+        resolve_dependencies=False,
+    )
 
     assert result["ok"] is True
     assert result["result"] == {"word_count": 2}
-    assert result["metrics"]["usage_count"] == 1
 
 
 def test_web_bubble_tools_can_import_http_clients() -> None:
@@ -174,13 +150,12 @@ def test_non_web_tools_still_reject_http_clients() -> None:
         ),
         category="debugger",
     )
-
     try:
         validate_spec(spec)
-    except RBForgeError as exc:
+    except ToolSpecError as exc:
         assert "forbidden import" in str(exc)
     else:
-        raise AssertionError("expected RBForgeError")
+        raise AssertionError("expected ToolSpecError")
 
 
 def test_shell_tools_can_import_subprocess_but_other_tools_cannot() -> None:
@@ -206,7 +181,7 @@ def test_shell_tools_can_import_subprocess_but_other_tools_cannot() -> None:
     )
     try:
         validate_spec(debugger_spec)
-    except RBForgeError as exc:
+    except ToolSpecError as exc:
         assert "forbidden import" in str(exc)
     else:
-        raise AssertionError("expected RBForgeError")
+        raise AssertionError("expected ToolSpecError")

@@ -8,20 +8,14 @@ with pending review status.
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
-from rbforge_core.rbmem import RbmemStore
-
-
-def utc_now_iso() -> str:
-    """Return the current UTC time as an ISO-8601 string."""
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-
+from rbforge_core.models import utc_now_iso
+from rbforge_core.rbmem import RbmemStore, RbmemError
 
 class ReviewStatus(Enum):
     """Status of a review candidate."""
@@ -116,10 +110,10 @@ def queue_candidate(
 
 
 def _generate_review_id(tool_name: str) -> str:
-    """Generate a unique review ID from tool name and timestamp."""
-    ts = utc_now_iso().replace(":", "-").replace("+", "_")
-    hash_prefix = hashlib.md5(tool_name.encode()).hexdigest()[:6]
-    return f"{tool_name}_{ts}_{hash_prefix}"
+    """Generate a unique review ID from tool name and random suffix."""
+    import uuid
+    random_suffix = uuid.uuid4().hex[:8]
+    return f"{tool_name}_{random_suffix}"
 
 
 def get_pending_reviews(

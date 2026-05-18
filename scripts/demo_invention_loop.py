@@ -94,7 +94,6 @@ def main() -> None:
             )
         },
         memory_path=memory_path,
-        trace_path=trace_path,
     )
     print("\nImmediate reuse result:")
     print(json.dumps(reuse, indent=2, sort_keys=True))
@@ -117,18 +116,20 @@ def _extract_think(trace: str) -> str:
     return trace[start:end].strip()
 
 
-def _compact_forge_result(result: dict[str, object]) -> dict[str, object]:
+def _compact_forge_result(result) -> dict[str, object]:
+    """Compact a ForgeResult dataclass for display."""
+    from dataclasses import asdict
+    d = asdict(result) if not isinstance(result, dict) else result
     return {
-        "ok": result["ok"],
-        "status": result["status"],
-        "name": result["name"],
-        "section_path": result["section_path"],
-        "registry_size": result["registry_size"],
+        "ok": d.get("ok"),
+        "name": d.get("name"),
+        "section_path": d.get("section_path"),
+        "registry_size": d.get("registry_size"),
+        "review_required": d.get("review_required"),
         "sandbox": {
-            "ok": result["sandbox"]["ok"],  # type: ignore[index]
-            "backend": result["sandbox"]["backend"],  # type: ignore[index]
+            "ok": d.get("sandbox", {}).get("ok") if isinstance(d.get("sandbox"), dict) else getattr(d.get("sandbox"), "ok", None),
+            "backend": d.get("sandbox", {}).get("backend") if isinstance(d.get("sandbox"), dict) else getattr(d.get("sandbox"), "backend", None),
         },
-        "graph_edges": result["graph_edges"],
     }
 
 
