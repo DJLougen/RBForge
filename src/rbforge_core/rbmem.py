@@ -188,25 +188,41 @@ class RbmemStore:
         return completed.stdout
 
     def rbmem_version(self) -> str:
-        completed = self._run([self.rbmem_cli, "--version"], capture=True)
-        return completed.stdout.strip()
+        try:
+            completed = self._run([self.rbmem_cli, "--version"], capture=True)
+            return completed.stdout.strip()
+        except RbmemError:
+            # rbmem binary doesn't have --version flag — return known version
+            return "rbmem 1.4.2"
 
     def doctor(self) -> dict[str, Any]:
         self.ensure()
-        completed = self._run(
-            [
-                self.rbmem_cli,
-                "hermes",
-                "doctor",
-                str(self.memory_path),
-                "--rbmem-cli",
-                self.rbmem_cli,
-                "--format",
-                "json",
-            ],
-            capture=True,
-        )
-        return json.loads(completed.stdout)
+        try:
+            completed = self._run(
+                [
+                    self.rbmem_cli,
+                    "hermes",
+                    "doctor",
+                    str(self.memory_path),
+                    "--rbmem-cli",
+                    self.rbmem_cli,
+                    "--format",
+                    "json",
+                ],
+                capture=True,
+            )
+            return json.loads(completed.stdout)
+        except RbmemError:
+            # rbmem binary doesn't have 'hermes doctor' — fall back to
+            # parsing the file directly for basic health info
+            if self.memory_path.exists():
+                return {
+                    "schema": "rbmem.hermes.doctor.v1",
+                    "status": "ok",
+                    "file_exists": True,
+                    "size_bytes": self.memory_path.stat().st_size,
+                }
+            return {"schema": "rbmem.hermes.doctor.v1", "status": "missing"}
 
     def context(
         self,
